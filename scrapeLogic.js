@@ -1,8 +1,11 @@
 const puppeteer = require("puppeteer")
+require("dotenv").config()
 
 const scrapeLogic = async res => {
   // Launch the browser
-  const browser = await puppeteer.launch()
+  const browser = await puppeteer.launch({
+    executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : puppeteer.executablePath()
+  })
 
   try {
     // Open a new blank page
