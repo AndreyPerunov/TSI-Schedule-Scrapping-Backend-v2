@@ -11,7 +11,6 @@ const scrapeLogic = async res => {
   try {
     // Open a new blank page
     const page = await browser.newPage()
-    throw new Error("This is a test error")
 
     // Navigate the page to a URL
     await page.goto("https://developer.chrome.com/")
