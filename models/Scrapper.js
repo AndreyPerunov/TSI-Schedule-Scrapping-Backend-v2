@@ -135,6 +135,11 @@ class Scrapper {
       const page = await browser.newPage()
       console.log("Page Created")
 
+      // Increase Timeout
+      process.stdout.write("Increasing Timeout")
+      await page.setDefaultNavigationTimeout(120000)
+      console.log("✅")
+
       // Set screen size
       await page.setViewport({ width: 1080, height: 1024 })
       console.log("Viewport Set")
