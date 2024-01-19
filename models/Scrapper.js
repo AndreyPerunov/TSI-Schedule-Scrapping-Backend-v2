@@ -19,6 +19,11 @@ class Scrapper {
       const page = await browser.newPage()
       console.log("✅")
 
+      // Increase Timeout
+      process.stdout.write("Increasing Timeout")
+      await page.setDefaultNavigationTimeout(120000)
+      console.log("✅")
+
       // Navigate the page to a URL
       process.stdout.write("Navigating to Login Page")
       const url = "https://my.tsi.lv/login"
