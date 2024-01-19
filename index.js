@@ -1,10 +1,6 @@
 const express = require("express")
-const { getSchedule } = require("./scrapeLogic")
-const cors = require("cors")
-
+const { scrapeLogic } = require("./scrapeLogic")
 const app = express()
-app.use(cors())
-app.use(express.json())
 
 const PORT = process.env.PORT || 3000
 

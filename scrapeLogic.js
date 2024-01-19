@@ -1,6 +1,31 @@
 const puppeteer = require("puppeteer")
 require("dotenv").config()
 
+const scrapeLogic = async res => {
+  const browser = await puppeteer.launch()
+  try {
+    const page = await browser.newPage()
+
+    await page.goto("https://developer.chrome.com/")
+
+    // Set screen size
+    await page.setViewport({ width: 1080, height: 1024 })
+
+    const heading = await page.waitForSelector(".devsite-landing-row-description")
+    const fullTitle = await page.evaluate(heading => heading.textContent, heading)
+
+    // Print the full title
+    const logStatement = `The title of this blog post is ${fullTitle}`
+    console.log(logStatement)
+    res.send(logStatement)
+  } catch (e) {
+    console.error(e)
+    res.send(`Something went wrong while running Puppeteer: ${e}`)
+  } finally {
+    await browser.close()
+  }
+}
+
 const getSchedule = async res => {
   // Launch the browser
   const browser = await puppeteer.launch({
@@ -13,12 +38,12 @@ const getSchedule = async res => {
     // Open a new blank page
     const page = await browser.newPage()
 
-    // Set screen size
-    await page.setViewport({ width: 1080, height: 1024 })
-
     // Navigate the page to a URL
     const url = "https://my.tsi.lv/login"
     await page.goto(url)
+
+    // Set screen size
+    await page.setViewport({ width: 1080, height: 1024 })
 
     // Type Username
     await page.waitForSelector("input[name=username]")
@@ -88,6 +113,63 @@ const getSchedule = async res => {
   }
 }
 
+const getGroups = async () => {
+  // Launch the browser
+  const browser = await puppeteer.launch({
+    args: ["--disable-setuid-sandbox", "--no-sandbox", "--single-process", "--no-zygote"],
+    executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : puppeteer.executablePath()
+  })
+
+  try {
+    // Open a new blank page
+    console.log("New Page")
+    const page = await browser.newPage()
+    console.log("Page Created")
+
+    // Set screen size
+    await page.setViewport({ width: 1080, height: 1024 })
+    console.log("Viewport Set")
+
+    // Navigate the page to a URL
+    const url = "https://my.tsi.lv/login"
+    await page.goto(url)
+    console.log("Page Navigated")
+    await page.waitForNavigation()
+    await page.waitForTimeout(1000)
+    console.log("Page Loaded")
+
+    // Type Username
+    await page.waitForSelector("input[name=username]")
+    await page.type("input[name=username]", process.env.TSI_USERNAME, { delay: 40 })
+
+    // Type Password
+    await page.waitForSelector("input[name=password]")
+    await page.type("input[name=password]", process.env.TSI_PASSWORD, { delay: 40 })
+
+    // Submit Form and wait for navigation
+    await page.keyboard.press("Enter")
+    await page.waitForNavigation()
+
+    // Check for Form Result
+    if ((await page.url()) != "https://my.tsi.lv/personal") {
+      throw new Error("Failed to login")
+    }
+
+    // Go to Schedule Url
+    const scheduleUrl = "https://my.tsi.lv/schedule"
+    await Promise.all([page.goto(scheduleUrl), page.waitForNavigation()])
+
+    // Wait for the select element to be present
+    const select = await page.waitForSelector('select[name="sel-group"]')
+
+    console.log("Select:", select)
+  } catch (error) {
+    console.error(error)
+  } finally {
+    await browser.close()
+  }
+}
+
 function convertArrayToObject(inputArray, date) {
   const result = []
   // date = Friday, September 15, 2023
@@ -121,4 +203,4 @@ function convertArrayToObject(inputArray, date) {
   return result
 }
 
-module.exports = { getSchedule }
+module.exports = { scrapeLogic }
