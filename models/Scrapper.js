@@ -2,186 +2,164 @@ const puppeteer = require("puppeteer")
 require("dotenv").config()
 
 class Scrapper {
-  async getSchedule() {
-    // Launch the browser
-
-    process.stdout.write("Launching Browser")
-    const browser = await puppeteer.launch({
-      args: process.env.NODE_ENV === "production" ? ["--disable-setuid-sandbox", "--no-sandbox", "--single-process", "--no-zygote"] : ["--disable-setuid-sandbox", "--no-sandbox", "--no-zygote"],
-      executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : puppeteer.executablePath(),
-      headless: "new"
-    })
-    console.log("✅")
-
-    try {
-      // Open a new blank page
-      process.stdout.write("Opening New Page")
-      const page = await browser.newPage()
+  getSchedule() {
+    return new Promise(async (resolve, reject) => {
+      // Launch the browser
+      process.stdout.write("Launching Browser")
+      const browser = await puppeteer.launch({
+        args: process.env.NODE_ENV === "production" ? ["--disable-setuid-sandbox", "--no-sandbox", "--single-process", "--no-zygote"] : ["--disable-setuid-sandbox", "--no-sandbox", "--no-zygote"],
+        executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : puppeteer.executablePath(),
+        headless: "new"
+      })
       console.log("✅")
 
-      // Increase Timeout
-      process.stdout.write("Increasing Timeout")
-      await page.setDefaultNavigationTimeout(120000)
-      console.log("✅")
-
-      // Navigate the page to a URL
-      process.stdout.write("Navigating to Login Page")
-      const url = "https://my.tsi.lv/login"
-      await page.goto(url)
-      console.log("✅")
-
-      // Set screen size
-      process.stdout.write("Setting Viewport")
-      await page.setViewport({ width: 1080, height: 1024 })
-      console.log("✅")
-
-      // Type Username
-      process.stdout.write("Typing Username")
-      await page.waitForSelector("input[name=username]")
-      await page.type("input[name=username]", process.env.TSI_USERNAME, { delay: 40 })
-      console.log("✅")
-
-      // Type Password
-      process.stdout.write("Typing Password")
-      await page.waitForSelector("input[name=password]")
-      await page.type("input[name=password]", process.env.TSI_PASSWORD, { delay: 40 })
-      console.log("✅")
-
-      // Submit Form and wait for navigation
-      process.stdout.write("Submitting Form")
-      await page.keyboard.press("Enter")
-      await page.waitForNavigation()
-      console.log("✅")
-
-      // Check for Form Result
-      process.stdout.write("Checking Login Result")
-      if ((await page.url()) != "https://my.tsi.lv/personal") {
-        throw new Error("Failed to login")
-      }
-      console.log("✅")
-
-      // Go to Schedule Url
-      process.stdout.write("Navigating to Schedule Page")
-      const scheduleUrl = "https://my.tsi.lv/schedule"
-      await Promise.all([page.goto(scheduleUrl), page.waitForNavigation()])
-      console.log("✅")
-
-      // Set Group
-      process.stdout.write("Setting Group")
-      const group = "4203BDA"
-      await page.waitForSelector('select[name="sel-group"]')
-      const option = (await page.$x(`//*[@id="form1"]/div/div[1]/div[1]/select/option[text() = "${group}"]`))[0]
-      const value = await (await option.getProperty("value")).jsonValue()
-      await page.select('select[name="sel-group"]', value)
-      await page.waitForSelector('button[name="show"]')
-      await page.click('button[name="show"]')
-      console.log("✅")
-
-      // Switch to Day View
-      process.stdout.write("Switching to Day View")
-      await page.waitForSelector('button[name="day"]')
-      await Promise.all([page.click('button[name="day"]'), page.waitForNavigation("networkidle2")])
-      console.log("✅")
-
-      // Go Through Each Day
-      console.log("Getting Schedule:")
-      let result = []
-      const days = 30 * 3
-      for (let i = 0; i < days; i++) {
-        // Get Array of All Day Lectures
-        process.stdout.write(` Day ${i + 1}/${days}: `)
-        const daySchedule = await page.$$eval(".wide-screen table tbody tr", rows => {
-          return Array.from(rows, row => {
-            const columns = row.querySelectorAll("td")
-            return Array.from(columns, column => column.innerText)
-          })
-        })
-
-        // Get The Date
-        const date = await page.$$eval(".col-lg-6.form-row p", elems => {
-          return Array.from(elems, elem => elem.innerText)[0]
-        })
-
-        // Format Array and Date
-        result = result.concat(this.#convertArrayToObject(daySchedule, date))
-
-        // Go To The Next Day
-        await Promise.all([page.click('button[name="next"]'), page.waitForNavigation("networkidle2")])
+      try {
+        // Open a new blank page
+        process.stdout.write("Opening New Page")
+        const page = await browser.newPage()
         console.log("✅")
-      }
 
-      // Send Result
-      console.log("Schedule Fetched Successfully✅")
-      return result
-    } catch (error) {
-      console.log("❌")
-      console.error(error)
-      return `Something went wrong while running Puppeteer: ${error}`
-    } finally {
-      await browser.close()
-    }
+        // Increase Timeout
+        process.stdout.write("Increasing Timeout")
+        await page.setDefaultNavigationTimeout(120000)
+        console.log("✅")
+
+        // Set screen size
+        process.stdout.write("Setting Viewport")
+        await page.setViewport({ width: 1080, height: 1024 })
+        console.log("✅")
+
+        // Login
+        await this.#login(page)
+
+        // Go to Schedule Url
+        process.stdout.write("Navigating to Schedule Page")
+        const scheduleUrl = "https://my.tsi.lv/schedule"
+        await Promise.all([page.goto(scheduleUrl), page.waitForNavigation()])
+        console.log("✅")
+
+        // Set Group
+        process.stdout.write("Setting Group")
+        const group = "4203BDA"
+        await page.waitForSelector('select[name="sel-group"]')
+        const option = (await page.$x(`//*[@id="form1"]/div/div[1]/div[1]/select/option[text() = "${group}"]`))[0]
+        const value = await (await option.getProperty("value")).jsonValue()
+        await page.select('select[name="sel-group"]', value)
+        await page.waitForSelector('button[name="show"]')
+        await page.click('button[name="show"]')
+        console.log("✅")
+
+        // Switch to Day View
+        process.stdout.write("Switching to Day View")
+        await page.waitForSelector('button[name="day"]')
+        await Promise.all([page.click('button[name="day"]'), page.waitForNavigation("networkidle2")])
+        console.log("✅")
+
+        // Go Through Each Day
+        console.log("Getting Schedule:")
+        let result = []
+        const days = 30 * 3
+        for (let i = 0; i < days; i++) {
+          // Get Array of All Day Lectures
+          process.stdout.write(` Day ${i + 1}/${days}: `)
+          const daySchedule = await page.$$eval(".wide-screen table tbody tr", rows => {
+            return Array.from(rows, row => {
+              const columns = row.querySelectorAll("td")
+              return Array.from(columns, column => column.innerText)
+            })
+          })
+
+          // Get The Date
+          const date = await page.$$eval(".col-lg-6.form-row p", elems => {
+            return Array.from(elems, elem => elem.innerText)[0]
+          })
+
+          // Format Array and Date
+          result = result.concat(this.#convertArrayToObject(daySchedule, date))
+
+          // Go To The Next Day
+          await Promise.all([page.click('button[name="next"]'), page.waitForNavigation("networkidle2")])
+          console.log("✅")
+        }
+
+        // Send Result
+        console.log("Schedule Scrapped Successfully✅")
+        resolve({ status: "success", message: "Schedule Scrapped Successfully✅", result: result })
+      } catch (error) {
+        console.log("❌")
+        console.error(error)
+        return { status: "fail", error: error, message: "Something went wrong while running Puppeteer❌" }
+      } finally {
+        await browser.close()
+      }
+    })
   }
 
-  async getGroups() {
-    // Launch the browser
-    const browser = await puppeteer.launch({
-      args: process.env.NODE_ENV === "production" ? ["--disable-setuid-sandbox", "--no-sandbox", "--single-process", "--no-zygote"] : ["--disable-setuid-sandbox", "--no-sandbox", "--no-zygote"],
-      executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : puppeteer.executablePath()
-    })
-
-    try {
-      // Open a new blank page
-      console.log("New Page")
-      const page = await browser.newPage()
-      console.log("Page Created")
-
-      // Increase Timeout
-      process.stdout.write("Increasing Timeout")
-      await page.setDefaultNavigationTimeout(120000)
+  getGroups() {
+    return new Promise(async (resolve, reject) => {
+      // Launch the browser
+      process.stdout.write("Launching Browser")
+      const browser = await puppeteer.launch({
+        args: process.env.NODE_ENV === "production" ? ["--disable-setuid-sandbox", "--no-sandbox", "--single-process", "--no-zygote"] : ["--disable-setuid-sandbox", "--no-sandbox", "--no-zygote"],
+        executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : puppeteer.executablePath(),
+        headless: "new"
+      })
       console.log("✅")
 
-      // Set screen size
-      await page.setViewport({ width: 1080, height: 1024 })
-      console.log("Viewport Set")
+      try {
+        // Open a new blank page
+        process.stdout.write("Opening New Page")
+        const page = await browser.newPage()
+        console.log("✅")
 
-      // Navigate the page to a URL
-      const url = "https://my.tsi.lv/login"
-      await page.goto(url)
-      console.log("Page Navigated")
-      await page.waitForNavigation()
-      await page.waitForTimeout(1000)
-      console.log("Page Loaded")
+        // Increase Timeout
+        process.stdout.write("Increasing Timeout")
+        await page.setDefaultNavigationTimeout(120000)
+        console.log("✅")
 
-      // Type Username
-      await page.waitForSelector("input[name=username]")
-      await page.type("input[name=username]", process.env.TSI_USERNAME, { delay: 40 })
+        // Set screen size
+        process.stdout.write("Setting Viewport")
+        await page.setViewport({ width: 1080, height: 1024 })
+        console.log("✅")
 
-      // Type Password
-      await page.waitForSelector("input[name=password]")
-      await page.type("input[name=password]", process.env.TSI_PASSWORD, { delay: 40 })
+        // Login
+        await this.#login(page)
 
-      // Submit Form and wait for navigation
-      await page.keyboard.press("Enter")
-      await page.waitForNavigation()
+        // Go to Schedule Url
+        process.stdout.write("Navigating to Schedule Page")
+        const scheduleUrl = "https://my.tsi.lv/schedule"
+        await Promise.all([page.goto(scheduleUrl), page.waitForNavigation()])
+        console.log("✅")
 
-      // Check for Form Result
-      if ((await page.url()) != "https://my.tsi.lv/personal") {
-        throw new Error("Failed to login")
+        // Get Groups
+        process.stdout.write("Getting Groups")
+        const select = await page.$('select[name="sel-group"]')
+        const groups = await page.evaluate(select => {
+          const options = Array.from(select.querySelectorAll("option"))
+          return options.map(option => option.innerText)
+        }, select)
+        groups.shift()
+        console.log("✅")
+
+        // Write file
+        process.stdout.write("Writing File")
+        const fs = require("fs")
+        fs.writeFile("./cache/groups.json", JSON.stringify(groups), err => {
+          if (err) throw err
+        })
+        console.log("✅")
+
+        // Send Result
+        console.log("Groups Scrapped Successfully✅")
+        resolve({ status: "success", message: "Groups Scrapped Successfully✅", result: groups })
+      } catch (error) {
+        console.log("❌")
+        console.error(error)
+        reject({ status: "fail", message: "Something went wrong while running Puppeteer❌", error: `${error}` })
+      } finally {
+        await browser.close()
       }
-
-      // Go to Schedule Url
-      const scheduleUrl = "https://my.tsi.lv/schedule"
-      await Promise.all([page.goto(scheduleUrl), page.waitForNavigation()])
-
-      // Wait for the select element to be present
-      const select = await page.waitForSelector('select[name="sel-group"]')
-
-      console.log("Select:", select)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      await browser.close()
-    }
+    })
   }
 
   #convertArrayToObject(inputArray, date) {
@@ -215,6 +193,39 @@ class Scrapper {
     })
 
     return result
+  }
+
+  async #login(page) {
+    // Navigate the page to a URL
+    process.stdout.write("Navigating to Login Page")
+    const url = "https://my.tsi.lv/login"
+    await page.goto(url)
+    console.log("✅")
+
+    // Type Username
+    process.stdout.write("Typing Username")
+    await page.waitForSelector("input[name=username]")
+    await page.type("input[name=username]", process.env.TSI_USERNAME, { delay: 40 })
+    console.log("✅")
+
+    // Type Password
+    process.stdout.write("Typing Password")
+    await page.waitForSelector("input[name=password]")
+    await page.type("input[name=password]", process.env.TSI_PASSWORD, { delay: 40 })
+    console.log("✅")
+
+    // Submit Form and wait for navigation
+    process.stdout.write("Submitting Form")
+    await page.keyboard.press("Enter")
+    await page.waitForNavigation()
+    console.log("✅")
+
+    // Check for Form Result
+    process.stdout.write("Checking Login Result")
+    if ((await page.url()) != "https://my.tsi.lv/personal") {
+      throw new Error("Failed to login")
+    }
+    console.log("✅")
   }
 }
 

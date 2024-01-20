@@ -6,5 +6,6 @@ const router = express.Router()
 router.use(cors())
 
 router.get("/scrape", ScrapperController.getSchedule)
+router.get("/getGroups", ScrapperController.getGroups)
 
 module.exports = router

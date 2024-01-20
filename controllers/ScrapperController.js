@@ -1,9 +1,24 @@
 const Scrapper = require("../models/Scrapper")
 
 class ScrapperController {
-  async getSchedule(req, res) {
-    const schedule = await Scrapper.getSchedule()
-    res.json(schedule)
+  getSchedule(req, res) {
+    Scrapper.getSchedule()
+      .then(schedule => {
+        res.json(schedule)
+      })
+      .catch(err => {
+        res.status(500).json(err)
+      })
+  }
+
+  getGroups(req, res) {
+    Scrapper.getGroups()
+      .then(groups => {
+        res.json(groups)
+      })
+      .catch(err => {
+        res.status(500).json(err)
+      })
   }
 }
 
