@@ -2,7 +2,12 @@ const Scrapper = require("../models/Scrapper")
 
 class ScrapperController {
   getSchedule(req, res) {
-    Scrapper.getSchedule()
+    const group = req.query.group
+    const lecturer = req.query.lecturer
+    const room = req.query.room
+    const days = req.query.days
+
+    Scrapper.getSchedule(group, lecturer, room, days)
       .then(schedule => {
         res.json(schedule)
       })

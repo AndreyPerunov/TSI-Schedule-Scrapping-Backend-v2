@@ -2,8 +2,10 @@ const puppeteer = require("puppeteer")
 require("dotenv").config()
 
 class Scrapper {
-  getSchedule() {
+  getSchedule(group = "4203BDA", lecturer, room, days = 30) {
     return new Promise(async (resolve, reject) => {
+      console.log(`Getting Schedule for Days: ${days}` + (group ? `, Group: ${group}` : "") + (lecturer ? `, Lecturer: ${lecturer}` : "") + (room ? `, Room: ${room}` : "") + "🗓️")
+
       // Launch the browser
       process.stdout.write("Launching Browser")
       const browser = await puppeteer.launch({
@@ -40,7 +42,6 @@ class Scrapper {
 
         // Set Group
         process.stdout.write("Setting Group")
-        const group = "4203BDA"
         await page.waitForSelector('select[name="sel-group"]')
         const option = (await page.$x(`//*[@id="form1"]/div/div[1]/div[1]/select/option[text() = "${group}"]`))[0]
         const value = await (await option.getProperty("value")).jsonValue()
@@ -58,7 +59,6 @@ class Scrapper {
         // Go Through Each Day
         console.log("Getting Schedule:")
         let result = []
-        const days = 30 * 3
         for (let i = 0; i < days; i++) {
           // Get Array of All Day Lectures
           process.stdout.write(` Day ${i + 1}/${days}: `)
@@ -88,7 +88,7 @@ class Scrapper {
       } catch (error) {
         console.log("❌")
         console.error(error)
-        return { status: "fail", error: error, message: "Something went wrong while running Puppeteer❌" }
+        reject({ status: "fail", error: error, message: "Something went wrong while running Puppeteer❌" })
       } finally {
         await browser.close()
       }
