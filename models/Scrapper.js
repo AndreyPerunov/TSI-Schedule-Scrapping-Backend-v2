@@ -2,9 +2,17 @@ const puppeteer = require("puppeteer")
 require("dotenv").config()
 
 class Scrapper {
-  getSchedule(group = "4203BDA", lecturer, room, days = 30) {
+  getSchedule(group, lecturer, room, days = 30) {
     return new Promise(async (resolve, reject) => {
       console.log(`Getting Schedule for Days: ${days}` + (group ? `, Group: ${group}` : "") + (lecturer ? `, Lecturer: ${lecturer}` : "") + (room ? `, Room: ${room}` : "") + "🗓️")
+
+      // Validation
+      if (days > 180) throw new Error("Days can't be more than 180❌")
+      if (days < 1) throw new Error("Days can't be less than 1❌")
+      if (!group && !lecturer && !room) throw new Error("You must provide at least one of the following: Group, Lecturer, Room❌")
+
+      // DB Validation
+      // TODO
 
       // Launch the browser
       process.stdout.write("Launching Browser")
@@ -40,15 +48,28 @@ class Scrapper {
         await Promise.all([page.goto(scheduleUrl), page.waitForNavigation()])
         console.log("✅")
 
+        // Setting up Filters
         // Set Group
-        process.stdout.write("Setting Group")
-        await page.waitForSelector('select[name="sel-group"]')
-        const option = (await page.$x(`//*[@id="form1"]/div/div[1]/div[1]/select/option[text() = "${group}"]`))[0]
-        const value = await (await option.getProperty("value")).jsonValue()
-        await page.select('select[name="sel-group"]', value)
-        await page.waitForSelector('button[name="show"]')
-        await page.click('button[name="show"]')
-        console.log("✅")
+        if (group) {
+          process.stdout.write("Setting Group")
+          await page.waitForSelector('select[name="sel-group"]')
+          const option = (await page.$x(`//*[@id="form1"]/div/div[1]/div[1]/select/option[text() = "${group}"]`))[0]
+          const value = await (await option.getProperty("value")).jsonValue()
+          await page.select('select[name="sel-group"]', value)
+          await page.waitForSelector('button[name="show"]')
+          await page.click('button[name="show"]')
+          console.log("✅")
+        }
+
+        // Set Lecturer
+        // TODO
+        if (lecturer) {
+        }
+
+        // Set Room
+        // TODO
+        if (room) {
+        }
 
         // Switch to Day View
         process.stdout.write("Switching to Day View")
@@ -81,6 +102,9 @@ class Scrapper {
           await Promise.all([page.click('button[name="next"]'), page.waitForNavigation("networkidle2")])
           console.log("✅")
         }
+
+        // Save result to DB
+        // TODO
 
         // Send Result
         console.log("Schedule Scrapped Successfully✅")
@@ -141,13 +165,8 @@ class Scrapper {
         groups.shift()
         console.log("✅")
 
-        // Write file
-        process.stdout.write("Writing File")
-        const fs = require("fs")
-        fs.writeFile("./cache/groups.json", JSON.stringify(groups), err => {
-          if (err) throw err
-        })
-        console.log("✅")
+        // Save result to DB
+        // TODO
 
         // Send Result
         console.log("Groups Scrapped Successfully✅")
