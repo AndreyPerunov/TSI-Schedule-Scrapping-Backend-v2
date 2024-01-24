@@ -1,29 +1,32 @@
-const puppeteer = require("puppeteer")
+import { launch, executablePath as _executablePath, Page } from "puppeteer"
+import { Lecture, ScrapedStudyDay, ScrapedDate } from "../types"
 require("dotenv").config()
 
 class Scrapper {
-  getSchedule(group, lecturer, room, days = 30) {
+  getSchedule(group?: string, lecturer?: string, room?: number, days: number = 30) {
     return new Promise(async (resolve, reject) => {
       console.log(`Getting Schedule for Days: ${days}` + (group ? `, Group: ${group}` : "") + (lecturer ? `, Lecturer: ${lecturer}` : "") + (room ? `, Room: ${room}` : "") + "🗓️")
 
-      // Validation
-      if (days > 180) throw new Error("Days can't be more than 180❌")
-      if (days < 1) throw new Error("Days can't be less than 1❌")
-      if (!group && !lecturer && !room) throw new Error("You must provide at least one of the following: Group, Lecturer, Room❌")
-
-      // DB Validation
-      // TODO
-
       // Launch the browser
       process.stdout.write("Launching Browser")
-      const browser = await puppeteer.launch({
+      const browser = await launch({
         args: process.env.NODE_ENV === "production" ? ["--disable-setuid-sandbox", "--no-sandbox", "--single-process", "--no-zygote"] : ["--disable-setuid-sandbox", "--no-sandbox", "--no-zygote"],
-        executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : puppeteer.executablePath(),
+        executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : _executablePath(),
         headless: "new"
       })
       console.log("✅")
 
       try {
+        // Validation
+        process.stdout.write("Validating Input")
+        if (days > 180) throw new Error("Days can't be more than 180❌")
+        if (days < 1) throw new Error("Days can't be less than 1❌")
+        if (!group && !lecturer && !room) throw new Error("You must provide at least one of the following: Group, Lecturer, Room❌")
+        console.log("✅")
+
+        // DB Validation
+        // TODO
+
         // Open a new blank page
         process.stdout.write("Opening New Page")
         const page = await browser.newPage()
@@ -55,7 +58,7 @@ class Scrapper {
           await page.waitForSelector('select[name="sel-group"]')
           const option = (await page.$x(`//*[@id="form1"]/div/div[1]/div[1]/select/option[text() = "${group}"]`))[0]
           const value = await (await option.getProperty("value")).jsonValue()
-          await page.select('select[name="sel-group"]', value)
+          await page.select('select[name="sel-group"]', value as string)
           await page.waitForSelector('button[name="show"]')
           await page.click('button[name="show"]')
           console.log("✅")
@@ -74,12 +77,12 @@ class Scrapper {
         // Switch to Day View
         process.stdout.write("Switching to Day View")
         await page.waitForSelector('button[name="day"]')
-        await Promise.all([page.click('button[name="day"]'), page.waitForNavigation("networkidle2")])
+        await Promise.all([page.click('button[name="day"]'), page.waitForNavigation()])
         console.log("✅")
 
         // Go Through Each Day
         console.log("Getting Schedule:")
-        let result = []
+        let result: Lecture[] = []
         for (let i = 0; i < days; i++) {
           // Get Array of All Day Lectures
           process.stdout.write(` Day ${i + 1}/${days}: `)
@@ -91,15 +94,16 @@ class Scrapper {
           })
 
           // Get The Date
-          const date = await page.$$eval(".col-lg-6.form-row p", elems => {
-            return Array.from(elems, elem => elem.innerText)[0]
+          const date = await page.$$eval(".col-lg-6.form-row p", elements => {
+            return Array.from(elements, elem => elem.innerText)[0]
           })
 
           // Format Array and Date
-          result = result.concat(this.#convertArrayToObject(daySchedule, date))
+          result = result.concat(this.#formatLectures(daySchedule as ScrapedStudyDay, date as ScrapedDate))
 
           // Go To The Next Day
-          await Promise.all([page.click('button[name="next"]'), page.waitForNavigation("networkidle2")])
+          await Promise.all([page.click('button[name="next"]'), page.waitForNavigation()])
+          // await Promise.all([page.click('button[name="prev"]'), page.waitForNavigation()])
           console.log("✅")
         }
 
@@ -123,9 +127,9 @@ class Scrapper {
     return new Promise(async (resolve, reject) => {
       // Launch the browser
       process.stdout.write("Launching Browser")
-      const browser = await puppeteer.launch({
+      const browser = await launch({
         args: process.env.NODE_ENV === "production" ? ["--disable-setuid-sandbox", "--no-sandbox", "--single-process", "--no-zygote"] : ["--disable-setuid-sandbox", "--no-sandbox", "--no-zygote"],
-        executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : puppeteer.executablePath(),
+        executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : _executablePath(),
         headless: "new"
       })
       console.log("✅")
@@ -159,7 +163,7 @@ class Scrapper {
         process.stdout.write("Getting Groups")
         const select = await page.$('select[name="sel-group"]')
         const groups = await page.evaluate(select => {
-          const options = Array.from(select.querySelectorAll("option"))
+          const options = Array.from(select!.querySelectorAll("option"))
           return options.map(option => option.innerText)
         }, select)
         groups.shift()
@@ -181,40 +185,72 @@ class Scrapper {
     })
   }
 
-  #convertArrayToObject(inputArray, date) {
-    const result = []
-    // date = Friday, September 15, 2023
+  #formatLectures(inputArray: ScrapedStudyDay, date: ScrapedDate) {
+    // date = "Friday, September 15, 2023"
     const dateParts = date.split(", ") // dateParts = ["Friday","September 15","2023"]
-
     const dayMonthYear = dateParts[1].split(" ") // dayMonthYear = ["September","15"]
     const month = dayMonthYear[0]
     const day = parseInt(dayMonthYear[1])
     const year = parseInt(dateParts[2])
 
-    inputArray.forEach(element => {
-      if (element[1].trim() !== "") {
-        const classInfo = {
-          month: month,
-          day: day,
-          year: year,
-          timeStart: element[1].split(" - ")[0],
-          timeEnd: element[1].split(" - ")[1],
-          room: element[2],
-          group: element[3],
-          lecturer: element[4],
-          subject: element[5],
-          typeOfTheClass: element[6],
-          comment: element[7]
+    const formattedDay: Lecture[] = inputArray
+      .filter(lecture => lecture[1].trim() !== "")
+      .map(lecture => {
+        const [lectureNumber, time, room, group, lecturer, subject, typeOfTheClass, comment] = lecture
+        const [startTime, endTime] = time.split(" - ")
+        const timeZoneOffset = 120 // +02:00
+        const start = new Date(`${month} ${day}, ${year} ${startTime}`)
+        const end = new Date(`${month} ${day}, ${year} ${endTime}`)
+        const startTimeAdjusted = new Date(start.getTime() + timeZoneOffset * 60000).toISOString()
+        const endTimeAdjusted = new Date(end.getTime() + timeZoneOffset * 60000).toISOString()
+
+        return {
+          lectureNumber: parseInt(lectureNumber),
+          start: startTimeAdjusted.replace(".000Z", "+02:00"),
+          end: endTimeAdjusted.replace(".000Z", "+02:00"),
+          room: this.#convertRoomToNumber(room),
+          group: group.split(",").map(group => group.trim()),
+          lecturer: lecturer.trim(),
+          subject: subject.trim(),
+          typeOfTheClass: typeOfTheClass.trim(),
+          comment: comment.trim()
         }
+      })
 
-        result.push(classInfo)
-      }
-    })
-
-    return result
+    return formattedDay
   }
 
-  async #login(page) {
+  #convertRoomToNumber(room: string): number {
+    const numericValue = parseInt(room, 10)
+    // If the numeric value is a valid number, return it
+    if (!isNaN(numericValue)) {
+      return numericValue
+    }
+    // If the room is a Roman numeral, convert it to a number
+    const romanNumerals: { [key: string]: number } = {
+      I: 1,
+      II: 2,
+      III: 3,
+      IV: 4,
+      V: 5,
+      VI: 6,
+      VII: 7,
+      VIII: 8,
+      IX: 9,
+      X: 10
+    }
+
+    const romanNumeralValue = romanNumerals[room.toUpperCase()]
+
+    // If the Roman numeral is recognized, return its numeric value
+    if (romanNumeralValue !== undefined) {
+      return romanNumeralValue
+    }
+
+    return 0
+  }
+
+  async #login(page: Page) {
     // Navigate the page to a URL
     process.stdout.write("Navigating to Login Page")
     const url = "https://my.tsi.lv/login"
@@ -224,13 +260,21 @@ class Scrapper {
     // Type Username
     process.stdout.write("Typing Username")
     await page.waitForSelector("input[name=username]")
-    await page.type("input[name=username]", process.env.TSI_USERNAME, { delay: 40 })
+    if (process.env.TSI_USERNAME) {
+      await page.type("input[name=username]", process.env.TSI_USERNAME, { delay: 40 })
+    } else {
+      throw new Error("TSI_USERNAME is not defined")
+    }
     console.log("✅")
 
     // Type Password
     process.stdout.write("Typing Password")
     await page.waitForSelector("input[name=password]")
-    await page.type("input[name=password]", process.env.TSI_PASSWORD, { delay: 40 })
+    if (process.env.TSI_PASSWORD) {
+      await page.type("input[name=password]", process.env.TSI_PASSWORD, { delay: 40 })
+    } else {
+      throw new Error("TSI_PASSWORD is not defined")
+    }
     console.log("✅")
 
     // Submit Form and wait for navigation
@@ -248,4 +292,4 @@ class Scrapper {
   }
 }
 
-module.exports = new Scrapper()
+export default new Scrapper()

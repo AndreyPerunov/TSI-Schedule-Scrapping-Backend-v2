@@ -1,6 +1,10 @@
-const express = require("express")
+"use strict";
+const msg = "Hello World";
+console.log(msg);
+/*
+import express from "express"
 const app = express()
-const router = require("./router")
+import router from "./router.js"
 
 app.use(express.json())
 app.use("/api", router)
@@ -14,3 +18,5 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)
 })
+*/
+//# sourceMappingURL=index.js.map
