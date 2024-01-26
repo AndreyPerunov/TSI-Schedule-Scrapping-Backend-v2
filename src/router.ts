@@ -1,11 +1,11 @@
-import ScrapperController from "./controllers/ScrapperController"
+import ScraperController from "./controllers/ScraperController"
 import cors from "cors"
 import { Router } from "express"
 
 const router = Router()
 router.use(cors())
 
-router.get("/scrape", ScrapperController.getSchedule)
-router.get("/groups", ScrapperController.getGroups)
+router.get("/scrape", ScraperController.getSchedule)
+router.get("/groups", ScraperController.getGroups)
 
 export default router

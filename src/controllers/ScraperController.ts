@@ -1,14 +1,14 @@
-import Scrapper from "../models/Scrapper"
+import Scraper from "../models/Scraper"
 import { Request, Response } from "express"
 
-class ScrapperController {
+class ScraperController {
   getSchedule(req: Request, res: Response) {
     const group: string | undefined = req.query.group as string | undefined
     const lecturer: string | undefined = req.query.lecturer as string | undefined
     const room: number | undefined = parseInt(req.query.room as string) || undefined
     const days: number | undefined = parseInt(req.query.days as string) || undefined
 
-    Scrapper.getSchedule(group, lecturer, room, days)
+    Scraper.getSchedule(group, lecturer, room, days)
       .then(schedule => {
         res.json(schedule)
       })
@@ -18,7 +18,7 @@ class ScrapperController {
   }
 
   getGroups(req: Request, res: Response) {
-    Scrapper.getGroups()
+    Scraper.getGroups()
       .then(groups => {
         res.json(groups)
       })
@@ -28,4 +28,4 @@ class ScrapperController {
   }
 }
 
-export default new ScrapperController()
+export default new ScraperController()

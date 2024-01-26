@@ -2,7 +2,7 @@ import { launch, executablePath as _executablePath, Page } from "puppeteer"
 import { Lecture, ScrapedStudyDay, ScrapedDate } from "../types"
 require("dotenv").config()
 
-class Scrapper {
+class Scraper {
   getSchedule(group?: string, lecturer?: string, room?: number, days: number = 30) {
     return new Promise(async (resolve, reject) => {
       console.log(`Getting Schedule for Days: ${days}` + (group ? `, Group: ${group}` : "") + (lecturer ? `, Lecturer: ${lecturer}` : "") + (room ? `, Room: ${room}` : "") + "🗓️")
@@ -111,8 +111,8 @@ class Scrapper {
         // TODO
 
         // Send Result
-        console.log("Schedule Scrapped Successfully✅")
-        resolve({ status: "success", message: "Schedule Scrapped Successfully✅", result: result })
+        console.log("Schedule Scraped Successfully✅")
+        resolve({ status: "success", message: "Schedule Scraped Successfully✅", result: result })
       } catch (error) {
         console.log("❌")
         console.error(error)
@@ -173,8 +173,8 @@ class Scrapper {
         // TODO
 
         // Send Result
-        console.log("Groups Scrapped Successfully✅")
-        resolve({ status: "success", message: "Groups Scrapped Successfully✅", result: groups })
+        console.log("Groups Scraped Successfully✅")
+        resolve({ status: "success", message: "Groups Scraped Successfully✅", result: groups })
       } catch (error) {
         console.log("❌")
         console.error(error)
@@ -292,4 +292,4 @@ class Scrapper {
   }
 }
 
-export default new Scrapper()
+export default new Scraper()
