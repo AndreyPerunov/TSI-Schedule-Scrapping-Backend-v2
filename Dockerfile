@@ -5,8 +5,12 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 
 WORKDIR /usr/src/app
 
+EXPOSE 3000
+
 COPY package*.json ./
+
 RUN npm ci 
+
 COPY . .
+
 RUN npm run build
-CMD ["npm", "start"]

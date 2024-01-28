@@ -5,15 +5,27 @@ class ScheduleService {
   startScheduledScrape() {
     // At 06:00 on every day-of-month. (0 6 */1 * *)
     schedule.scheduleJob("0 6 */1 * *", () => {
-      console.log("🕐🗓️Starting schedule scraping at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
+      console.log("🕐 Starting schedule scraping at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
       Scraper.getSchedule()
+        .then(() => {
+          console.log("🕐 Finished schedule scraping✅")
+        })
+        .catch(error => {
+          console.log("🕐 Failed tp scrape schedule❌")
+        })
     })
   }
   startScheduledGroupScrape() {
     // At 02:00 on day-of-month 1 in every month (0 2 1 */1 *)
     schedule.scheduleJob("0 2 1 */1 *", () => {
-      console.log("🕐👥Starting group scraping  at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
+      console.log("🕐 Starting group scraping  at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
       Scraper.getGroups()
+        .then(() => {
+          console.log("🕐 Finished group scraping✅")
+        })
+        .catch(error => {
+          console.log("🕐 Failed tp scrape groups❌")
+        })
     })
   }
 }

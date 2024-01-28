@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Grpup:Lecture = M:M
+model Group {
+  groupName       String    @id()
+  scrapeTimeStamp DateTime?
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime? @updatedAt
+  subscribers     Int       @default(0)
+  users           Int       @default(0)
+  Lecture         Lecture[]
+}
+
+// Lecturer:Lecture = 1:M
+model Lecturer {
+  lecturerName    String    @id()
+  scrapeTimeStamp DateTime?
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime? @updatedAt
+  subscribers     Int       @default(0)
+  users           Int       @default(0)
+  Lecture         Lecture[]
+}
+
+// Room:Lecture = 1:M
+model Room {
+  roomNumber      Int       @id()
+  scrapeTimeStamp DateTime?
+  createdAt       DateTime? @default(now())
+  updatedAt       DateTime? @updatedAt
+  subscribers     Int       @default(0)
+  users           Int       @default(0)
+  Lecture         Lecture[]
+}
+
+// Lecture:Lecturer = 1:M
+// Lecture:Room = 1:M
+// Lecture:Group = M:M
+model Lecture {
+  lectureID      String   @id() @default(uuid())
+  groups         Group[]
+  lecturer       Lecturer @relation(fields: [lecturerName], references: [lecturerName])
+  lecturerName   String
+  room           Room     @relation(fields: [roomNumber], references: [roomNumber])
+  roomNumber     Int
+  lectureNumber  Int
+  subject        String
+  typeOfTheClass String
+  comment        String
+  start          DateTime
+  end            DateTime
+
+  @@unique([roomNumber, start])
+  @@unique([lecturerName, start])
+}

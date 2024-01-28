@@ -1,11 +1,13 @@
 import { launch, executablePath as _executablePath, Page } from "puppeteer"
 import { Lecture, ScrapedStudyDay, ScrapedDate } from "../types"
+import DatabaseService from "../services/DatabaseService"
+
 require("dotenv").config()
 
 class Scraper {
   getSchedule(group?: string, lecturer?: string, room?: number, days: number = 30) {
     return new Promise(async (resolve, reject) => {
-      console.log(`Getting Schedule for Days: ${days}` + (group ? `, Group: ${group}` : "") + (lecturer ? `, Lecturer: ${lecturer}` : "") + (room ? `, Room: ${room}` : "") + "🗓️")
+      console.log(`⛏️ Getting Schedule for Days: ${days}` + (group ? `, Group: ${group}` : "") + (lecturer ? `, Lecturer: ${lecturer}` : "") + (room ? `, Room: ${room}` : "") + "🗓️")
 
       // Launch the browser
       process.stdout.write("Launching Browser")
@@ -18,27 +20,27 @@ class Scraper {
 
       try {
         // Validation
-        process.stdout.write("Validating Input")
-        if (days > 180) throw new Error("Days can't be more than 180❌")
-        if (days < 1) throw new Error("Days can't be less than 1❌")
-        if (!group && !lecturer && !room) throw new Error("You must provide at least one of the following: Group, Lecturer, Room❌")
+        process.stdout.write("⛏️ Validating Input")
+        if (days > 180) throw new Error("⛏️ Days can't be more than 180❌")
+        if (days < 1) throw new Error("⛏️ Days can't be less than 1❌")
+        if (!group && !lecturer && !room) throw new Error("⛏️ You must provide at least one of the following: Group, Lecturer, Room❌")
         console.log("✅")
 
         // DB Validation
         // TODO
 
         // Open a new blank page
-        process.stdout.write("Opening New Page")
+        process.stdout.write("⛏️ Opening New Page")
         const page = await browser.newPage()
         console.log("✅")
 
         // Increase Timeout
-        process.stdout.write("Increasing Timeout")
+        process.stdout.write("⛏️ Increasing Timeout")
         await page.setDefaultNavigationTimeout(120000)
         console.log("✅")
 
         // Set screen size
-        process.stdout.write("Setting Viewport")
+        process.stdout.write("⛏️ Setting Viewport")
         await page.setViewport({ width: 1080, height: 1024 })
         console.log("✅")
 
@@ -46,7 +48,7 @@ class Scraper {
         await this.#login(page)
 
         // Go to Schedule Url
-        process.stdout.write("Navigating to Schedule Page")
+        process.stdout.write("⛏️ Navigating to Schedule Page")
         const scheduleUrl = "https://my.tsi.lv/schedule"
         await Promise.all([page.goto(scheduleUrl), page.waitForNavigation()])
         console.log("✅")
@@ -54,7 +56,7 @@ class Scraper {
         // Setting up Filters
         // Set Group
         if (group) {
-          process.stdout.write("Setting Group")
+          process.stdout.write("⛏️ Setting Group")
           await page.waitForSelector('select[name="sel-group"]')
           const option = (await page.$x(`//*[@id="form1"]/div/div[1]/div[1]/select/option[text() = "${group}"]`))[0]
           const value = await (await option.getProperty("value")).jsonValue()
@@ -75,17 +77,17 @@ class Scraper {
         }
 
         // Switch to Day View
-        process.stdout.write("Switching to Day View")
+        process.stdout.write("⛏️ Switching to Day View")
         await page.waitForSelector('button[name="day"]')
         await Promise.all([page.click('button[name="day"]'), page.waitForNavigation()])
         console.log("✅")
 
         // Go Through Each Day
-        console.log("Getting Schedule:")
+        console.log("⛏️ Getting Schedule:")
         let result: Lecture[] = []
         for (let i = 0; i < days; i++) {
           // Get Array of All Day Lectures
-          process.stdout.write(` Day ${i + 1}/${days}: `)
+          process.stdout.write(` ⛏️ Day ${i + 1}/${days}: `)
           const daySchedule = await page.$$eval(".wide-screen table tbody tr", rows => {
             return Array.from(rows, row => {
               const columns = row.querySelectorAll("td")
@@ -111,13 +113,15 @@ class Scraper {
         // TODO
 
         // Send Result
-        console.log("Schedule Scraped Successfully✅")
+        console.log("⛏️ Schedule Scraped Successfully✅")
         resolve({ status: "success", message: "Schedule Scraped Successfully✅", result: result })
       } catch (error) {
         console.log("❌")
+        process.stdout.write("⛏️ ")
         console.error(error)
         reject({ status: "fail", error: error, message: "Something went wrong while running Puppeteer❌" })
       } finally {
+        console.log("⛏️ Closing Browser")
         await browser.close()
       }
     })
@@ -126,7 +130,7 @@ class Scraper {
   getGroups() {
     return new Promise(async (resolve, reject) => {
       // Launch the browser
-      process.stdout.write("Launching Browser")
+      process.stdout.write("⛏️ Launching Browser")
       const browser = await launch({
         args: process.env.NODE_ENV === "production" ? ["--disable-setuid-sandbox", "--no-sandbox", "--single-process", "--no-zygote"] : ["--disable-setuid-sandbox", "--no-sandbox", "--no-zygote"],
         executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : _executablePath(),
@@ -136,17 +140,17 @@ class Scraper {
 
       try {
         // Open a new blank page
-        process.stdout.write("Opening New Page")
+        process.stdout.write("⛏️ Opening New Page")
         const page = await browser.newPage()
         console.log("✅")
 
         // Increase Timeout
-        process.stdout.write("Increasing Timeout")
+        process.stdout.write("⛏️ Increasing Timeout")
         await page.setDefaultNavigationTimeout(120000)
         console.log("✅")
 
         // Set screen size
-        process.stdout.write("Setting Viewport")
+        process.stdout.write("⛏️ Setting Viewport")
         await page.setViewport({ width: 1080, height: 1024 })
         console.log("✅")
 
@@ -154,13 +158,13 @@ class Scraper {
         await this.#login(page)
 
         // Go to Schedule Url
-        process.stdout.write("Navigating to Schedule Page")
+        process.stdout.write("⛏️ Navigating to Schedule Page")
         const scheduleUrl = "https://my.tsi.lv/schedule"
         await Promise.all([page.goto(scheduleUrl), page.waitForNavigation()])
         console.log("✅")
 
         // Get Groups
-        process.stdout.write("Getting Groups")
+        process.stdout.write("⛏️ Getting Groups")
         const select = await page.$('select[name="sel-group"]')
         const groups = await page.evaluate(select => {
           const options = Array.from(select!.querySelectorAll("option"))
@@ -170,16 +174,19 @@ class Scraper {
         console.log("✅")
 
         // Save result to DB
-        // TODO
+        console.log("⛏️ Saving Groups to DB")
+        await DatabaseService.saveGroups(groups)
 
         // Send Result
-        console.log("Groups Scraped Successfully✅")
+        console.log("⛏️ Groups Scraped Successfully✅")
         resolve({ status: "success", message: "Groups Scraped Successfully✅", result: groups })
       } catch (error) {
         console.log("❌")
+        process.stdout.write("⛏️ ")
         console.error(error)
         reject({ status: "fail", message: "Something went wrong while running Puppeteer❌", error: `${error}` })
       } finally {
+        console.log("⛏️ Closing Browser")
         await browser.close()
       }
     })
@@ -252,13 +259,13 @@ class Scraper {
 
   async #login(page: Page) {
     // Navigate the page to a URL
-    process.stdout.write("Navigating to Login Page")
+    process.stdout.write("⛏️ Navigating to Login Page")
     const url = "https://my.tsi.lv/login"
     await page.goto(url)
     console.log("✅")
 
     // Type Username
-    process.stdout.write("Typing Username")
+    process.stdout.write("⛏️ Typing Username")
     await page.waitForSelector("input[name=username]")
     if (process.env.TSI_USERNAME) {
       await page.type("input[name=username]", process.env.TSI_USERNAME, { delay: 40 })
@@ -268,7 +275,7 @@ class Scraper {
     console.log("✅")
 
     // Type Password
-    process.stdout.write("Typing Password")
+    process.stdout.write("⛏️ Typing Password")
     await page.waitForSelector("input[name=password]")
     if (process.env.TSI_PASSWORD) {
       await page.type("input[name=password]", process.env.TSI_PASSWORD, { delay: 40 })
@@ -278,13 +285,13 @@ class Scraper {
     console.log("✅")
 
     // Submit Form and wait for navigation
-    process.stdout.write("Submitting Form")
+    process.stdout.write("⛏️ Submitting Form")
     await page.keyboard.press("Enter")
     await page.waitForNavigation()
     console.log("✅")
 
     // Check for Form Result
-    process.stdout.write("Checking Login Result")
+    process.stdout.write("⛏️ Checking Login Result")
     if ((await page.url()) != "https://my.tsi.lv/personal") {
       throw new Error("Failed to login")
     }
