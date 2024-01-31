@@ -4,11 +4,13 @@ services:
   api:
     container_name: api
     build: .
-    command: npm start
+    command: npm run start:migrate:prod
     ports:
-      - 3000:3000
+      - 8080:3000
     depends_on:
       - pgdb
+    environment:
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@pgdb:5432/${DB_NAME}?schema=public
 
   pgdb:
     container_name: pgdb
