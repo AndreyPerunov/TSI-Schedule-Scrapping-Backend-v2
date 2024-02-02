@@ -1,6 +1,5 @@
 import schedule from "node-schedule"
 import Scraper from "../models/Scraper"
-import { group } from "console"
 
 class ScheduleService {
   startScheduledScrape() {
