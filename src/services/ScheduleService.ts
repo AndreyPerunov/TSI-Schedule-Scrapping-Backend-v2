@@ -1,18 +1,26 @@
 import schedule from "node-schedule"
 import Scraper from "./ScraperService"
+import DatabaseService from "./DatabaseService"
 
 class ScheduleService {
   startScheduledScrape() {
     // At 06:00 on every day-of-month. (0 6 */1 * *)
     schedule.scheduleJob("0 6 */1 * *", () => {
       console.log("🕐 Starting schedule scraping at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
-      Scraper.getSchedule({ group: "4203BDA" })
-        .then(() => {
-          console.log("🕐 Finished schedule scraping✅")
+      DatabaseService.getGroups()
+        .then(async groups => {
+          for (const group of groups) {
+            try {
+              if (group.users > 0) {
+                await Scraper.getSchedule({ group: group.groupName })
+                console.log(`🕐 Finished schedule scraping for group ${group.groupName} ✅`)
+              }
+            } catch (error) {
+              console.log(`🕐 Failed to scrape schedule for group ${group.groupName} ❌`)
+            }
+          }
         })
-        .catch(error => {
-          console.log("🕐 Failed tp scrape schedule❌")
-        })
+        .catch(error => console.log(error))
     })
   }
   startScheduledGroupScrape() {

@@ -1,5 +1,6 @@
 import { Lecture } from "../types"
 import { PrismaClient } from "@prisma/client"
+import type { Group } from "@prisma/client"
 
 class DatabaseService {
   async saveLectures(lectures: Lecture[]) {}
@@ -29,8 +30,18 @@ class DatabaseService {
     })
   }
 
-  getGroups(): Promise<string[]> {
-    return new Promise(async (resolve, reject) => {})
+  getGroups(): Promise<Group[]> {
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+      try {
+        const groups = await prisma.group.findMany()
+        resolve(groups)
+      } catch (error) {
+        reject(error)
+      } finally {
+        prisma.$disconnect()
+      }
+    })
   }
 }
 
