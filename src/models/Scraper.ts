@@ -5,7 +5,7 @@ import DatabaseService from "../services/DatabaseService"
 require("dotenv").config()
 
 class Scraper {
-  getSchedule(group?: string, lecturer?: string, room?: number, days: number = 30) {
+  getSchedule({ group, lecturer, room, days = 30 }: { group?: string; lecturer?: string; room?: number; days?: number }) {
     return new Promise(async (resolve, reject) => {
       console.log(`⛏️ Getting Schedule for Days: ${days}` + (group ? `, Group: ${group}` : "") + (lecturer ? `, Lecturer: ${lecturer}` : "") + (room ? `, Room: ${room}` : "") + "🗓️")
 

@@ -1,12 +1,13 @@
 import schedule from "node-schedule"
 import Scraper from "../models/Scraper"
+import { group } from "console"
 
 class ScheduleService {
   startScheduledScrape() {
     // At 06:00 on every day-of-month. (0 6 */1 * *)
     schedule.scheduleJob("0 6 */1 * *", () => {
       console.log("🕐 Starting schedule scraping at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
-      Scraper.getSchedule()
+      Scraper.getSchedule({ group: "4203BDA" })
         .then(() => {
           console.log("🕐 Finished schedule scraping✅")
         })

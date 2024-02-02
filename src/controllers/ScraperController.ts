@@ -8,7 +8,7 @@ class ScraperController {
     const room: number | undefined = parseInt(req.query.room as string) || undefined
     const days: number | undefined = parseInt(req.query.days as string) || undefined
 
-    Scraper.getSchedule(group, lecturer, room, days)
+    Scraper.getSchedule({ group, lecturer, room, days })
       .then(schedule => {
         res.json(schedule)
       })
