@@ -26,9 +26,6 @@ class ScraperService {
         if (!group && !lecturer && !room) throw new Error("⛏️ You must provide at least one of the following: Group, Lecturer, Room❌")
         console.log("✅")
 
-        // DB Validation
-        // TODO
-
         // Open a new blank page
         process.stdout.write("⛏️ Opening New Page")
         const page = await browser.newPage()
@@ -114,12 +111,12 @@ class ScraperService {
 
         // Send Result
         console.log("⛏️ Schedule Scraped Successfully✅")
-        resolve({ status: "success", message: "Schedule Scraped Successfully✅", result: result })
+        resolve(result)
       } catch (error) {
         console.log("❌")
         process.stdout.write("⛏️ ")
         console.error(error)
-        reject({ status: "fail", error: error, message: "Something went wrong while running Puppeteer❌" })
+        reject(error)
       } finally {
         console.log("⛏️ Closing Browser")
         await browser.close()
@@ -179,12 +176,12 @@ class ScraperService {
 
         // Send Result
         console.log("⛏️ Groups Scraped Successfully✅")
-        resolve({ status: "success", message: "Groups Scraped Successfully✅", result: groups })
+        resolve(groups)
       } catch (error) {
         console.log("❌")
         process.stdout.write("⛏️ ")
         console.error(error)
-        reject({ status: "fail", message: "Something went wrong while running Puppeteer❌", error: `${error}` })
+        reject(error)
       } finally {
         console.log("⛏️ Closing Browser")
         await browser.close()
