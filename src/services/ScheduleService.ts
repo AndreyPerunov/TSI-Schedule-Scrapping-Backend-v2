@@ -1,5 +1,5 @@
 import schedule from "node-schedule"
-import Scraper from "../models/Scraper"
+import Scraper from "./ScraperService"
 
 class ScheduleService {
   startScheduledScrape() {
