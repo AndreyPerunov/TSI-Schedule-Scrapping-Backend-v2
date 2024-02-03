@@ -213,7 +213,7 @@ class ScraperService {
           start: startTimeAdjusted.replace(".000Z", "+02:00"),
           end: endTimeAdjusted.replace(".000Z", "+02:00"),
           room: this.#convertRoomToNumber(room),
-          group: group.split(",").map(group => group.trim()),
+          groups: group.split(",").map(group => group.trim()),
           lecturer: lecturer.trim(),
           subject: subject.trim(),
           typeOfTheClass: typeOfTheClass.trim(),
