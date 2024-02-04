@@ -24,7 +24,7 @@ CREATE TABLE "Lecturer" (
 
 -- CreateTable
 CREATE TABLE "Room" (
-    "roomNumber" INTEGER NOT NULL,
+    "roomNumber" TEXT NOT NULL,
     "scrapeTimeStamp" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3),
@@ -41,8 +41,8 @@ CREATE TABLE "Lecture" (
     "groups" TEXT[],
     "lecturerRef" TEXT,
     "lecturerName" TEXT NOT NULL,
-    "roomRef" INTEGER,
-    "roomNumber" INTEGER NOT NULL,
+    "roomRef" TEXT,
+    "roomNumber" TEXT NOT NULL,
     "lectureNumber" INTEGER NOT NULL,
     "subject" TEXT NOT NULL,
     "typeOfTheClass" TEXT NOT NULL,
@@ -52,12 +52,6 @@ CREATE TABLE "Lecture" (
 
     CONSTRAINT "Lecture_pkey" PRIMARY KEY ("lectureID")
 );
-
--- CreateIndex
-CREATE UNIQUE INDEX "Lecture_roomNumber_start_key" ON "Lecture"("roomNumber", "start");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Lecture_lecturerName_start_key" ON "Lecture"("lecturerName", "start");
 
 -- AddForeignKey
 ALTER TABLE "Lecture" ADD CONSTRAINT "Lecture_groupRef_fkey" FOREIGN KEY ("groupRef") REFERENCES "Group"("groupName") ON DELETE SET NULL ON UPDATE CASCADE;

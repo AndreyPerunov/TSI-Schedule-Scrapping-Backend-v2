@@ -5,7 +5,7 @@ import DatabaseService from "../services/DatabaseService"
 require("dotenv").config()
 
 class ScraperService {
-  getSchedule({ group, lecturer, room, days = 30 }: { group?: string; lecturer?: string; room?: number; days?: number }) {
+  getSchedule({ group, lecturer, room, days = 30 }: { group?: string; lecturer?: string; room?: string; days?: number }) {
     return new Promise(async (resolve, reject) => {
       console.log(`⛏️ Getting Schedule for Days: ${days}` + (group ? `, Group: ${group}` : "") + (lecturer ? `, Lecturer: ${lecturer}` : "") + (room ? `, Room: ${room}` : "") + "🗓️")
 
@@ -234,7 +234,7 @@ class ScraperService {
           lectureNumber: parseInt(lectureNumber),
           start: startTimeAdjusted.replace(".000Z", "+02:00"),
           end: endTimeAdjusted.replace(".000Z", "+02:00"),
-          room: this.#convertRoomToNumber(room),
+          room: room,
           groups: group.split(",").map(group => group.trim()),
           lecturer: lecturer.trim(),
           subject: subject.trim(),
@@ -244,36 +244,6 @@ class ScraperService {
       })
 
     return formattedDay
-  }
-
-  #convertRoomToNumber(room: string): number {
-    const numericValue = parseInt(room, 10)
-    // If the numeric value is a valid number, return it
-    if (!isNaN(numericValue)) {
-      return numericValue
-    }
-    // If the room is a Roman numeral, convert it to a number
-    const romanNumerals: { [key: string]: number } = {
-      I: 1,
-      II: 2,
-      III: 3,
-      IV: 4,
-      V: 5,
-      VI: 6,
-      VII: 7,
-      VIII: 8,
-      IX: 9,
-      X: 10
-    }
-
-    const romanNumeralValue = romanNumerals[room.toUpperCase()]
-
-    // If the Roman numeral is recognized, return its numeric value
-    if (romanNumeralValue !== undefined) {
-      return romanNumeralValue
-    }
-
-    return 0
   }
 
   async #login(page: Page) {

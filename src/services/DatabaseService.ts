@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client"
 import type { Group } from "@prisma/client"
 
 class DatabaseService {
-  saveLectures({ lectures, group, lecturer, room }: { lectures: Lecture[]; group?: string; lecturer?: string; room?: number }) {
+  saveLectures({ lectures, group, lecturer, room }: { lectures: Lecture[]; group?: string; lecturer?: string; room?: string }) {
     return new Promise(async (resolve, reject) => {
       const prisma = new PrismaClient()
 

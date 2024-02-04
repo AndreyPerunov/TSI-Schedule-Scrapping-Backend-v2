@@ -7,7 +7,7 @@ type Lecture = {
   lectureNumber: number
   start: string
   end: string
-  room: number
+  room: string
   groups: string[]
   lecturer: string
   subject: string

@@ -1,7 +1,7 @@
 import ScraperService from "../services/ScraperService"
 
 class Scraper {
-  getSchedule({ group, lecturer, room, days = 30 }: { group?: string; lecturer?: string; room?: number; days?: number }) {
+  getSchedule({ group, lecturer, room, days = 30 }: { group?: string; lecturer?: string; room?: string; days?: number }) {
     return ScraperService.getSchedule({ group, lecturer, room, days })
   }
 

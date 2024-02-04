@@ -31,7 +31,7 @@ model Lecturer {
 
 // Room:Lecture = 1:M
 model Room {
-  roomNumber      Int       @id()
+  roomNumber      String    @id()
   scrapeTimeStamp DateTime?
   createdAt       DateTime? @default(now())
   updatedAt       DateTime? @updatedAt
@@ -52,8 +52,8 @@ model Lecture {
   lecturerRef    String? // relation exists only if this lecture was scraped for lecturer
   lecturerName   String
   room           Room?     @relation(fields: [roomRef], references: [roomNumber])
-  roomRef        Int? // relation exists only if this lecture was scraped for room
-  roomNumber     Int
+  roomRef        String? // relation exists only if this lecture was scraped for room
+  roomNumber     String
   lectureNumber  Int
   subject        String
   typeOfTheClass String
