@@ -107,7 +107,11 @@ class ScraperService {
         }
 
         // Save result to DB
-        // TODO
+        const onlyOneFilterIsSelected = (group && !lecturer && !room) || (!group && lecturer && !room) || (!group && !lecturer && room)
+        if (onlyOneFilterIsSelected && days === 30) {
+          console.log("⛏️ Saving Lectures to DB...")
+          await DatabaseService.saveLectures({ lectures: result, group, lecturer, room })
+        }
 
         // Send Result
         console.log("⛏️ Schedule Scraped Successfully✅")

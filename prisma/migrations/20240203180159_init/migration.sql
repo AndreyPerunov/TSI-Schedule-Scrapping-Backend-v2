@@ -37,7 +37,11 @@ CREATE TABLE "Room" (
 -- CreateTable
 CREATE TABLE "Lecture" (
     "lectureID" TEXT NOT NULL,
+    "groupRef" TEXT,
+    "groups" TEXT[],
+    "lecturerRef" TEXT,
     "lecturerName" TEXT NOT NULL,
+    "roomRef" INTEGER,
     "roomNumber" INTEGER NOT NULL,
     "lectureNumber" INTEGER NOT NULL,
     "subject" TEXT NOT NULL,
@@ -49,32 +53,17 @@ CREATE TABLE "Lecture" (
     CONSTRAINT "Lecture_pkey" PRIMARY KEY ("lectureID")
 );
 
--- CreateTable
-CREATE TABLE "_GroupToLecture" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
-);
-
 -- CreateIndex
 CREATE UNIQUE INDEX "Lecture_roomNumber_start_key" ON "Lecture"("roomNumber", "start");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Lecture_lecturerName_start_key" ON "Lecture"("lecturerName", "start");
 
--- CreateIndex
-CREATE UNIQUE INDEX "_GroupToLecture_AB_unique" ON "_GroupToLecture"("A", "B");
-
--- CreateIndex
-CREATE INDEX "_GroupToLecture_B_index" ON "_GroupToLecture"("B");
+-- AddForeignKey
+ALTER TABLE "Lecture" ADD CONSTRAINT "Lecture_groupRef_fkey" FOREIGN KEY ("groupRef") REFERENCES "Group"("groupName") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Lecture" ADD CONSTRAINT "Lecture_lecturerName_fkey" FOREIGN KEY ("lecturerName") REFERENCES "Lecturer"("lecturerName") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Lecture" ADD CONSTRAINT "Lecture_lecturerRef_fkey" FOREIGN KEY ("lecturerRef") REFERENCES "Lecturer"("lecturerName") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Lecture" ADD CONSTRAINT "Lecture_roomNumber_fkey" FOREIGN KEY ("roomNumber") REFERENCES "Room"("roomNumber") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_GroupToLecture" ADD CONSTRAINT "_GroupToLecture_A_fkey" FOREIGN KEY ("A") REFERENCES "Group"("groupName") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_GroupToLecture" ADD CONSTRAINT "_GroupToLecture_B_fkey" FOREIGN KEY ("B") REFERENCES "Lecture"("lectureID") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Lecture" ADD CONSTRAINT "Lecture_roomRef_fkey" FOREIGN KEY ("roomRef") REFERENCES "Room"("roomNumber") ON DELETE SET NULL ON UPDATE CASCADE;

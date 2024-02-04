@@ -42,13 +42,17 @@ model Room {
 
 // Lecture:Lecturer = 1:M
 // Lecture:Room = 1:M
-// Lecture:Group = M:M
+// Lecture:Group = M:1
 model Lecture {
-  lectureID      String   @id() @default(uuid())
-  groups         Group[]
-  lecturer       Lecturer @relation(fields: [lecturerName], references: [lecturerName])
+  lectureID      String    @id() @default(uuid())
+  group          Group?    @relation(fields: [groupRef], references: [groupName])
+  groupRef       String? // relation exists only if this lecture was scraped for group
+  groups         String[]
+  lecturer       Lecturer? @relation(fields: [lecturerRef], references: [lecturerName])
+  lecturerRef    String? // relation exists only if this lecture was scraped for lecturer
   lecturerName   String
-  room           Room     @relation(fields: [roomNumber], references: [roomNumber])
+  room           Room?     @relation(fields: [roomRef], references: [roomNumber])
+  roomRef        Int? // relation exists only if this lecture was scraped for room
   roomNumber     Int
   lectureNumber  Int
   subject        String
