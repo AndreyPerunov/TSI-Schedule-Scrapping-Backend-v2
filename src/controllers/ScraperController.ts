@@ -26,6 +26,26 @@ class ScraperController {
         res.status(500).json(err)
       })
   }
+
+  getLecturers(req: Request, res: Response) {
+    Scraper.getLecturers()
+      .then(lecturers => {
+        res.json(lecturers)
+      })
+      .catch(err => {
+        res.status(500).json(err)
+      })
+  }
+
+  getRooms(req: Request, res: Response) {
+    Scraper.getRooms()
+      .then(rooms => {
+        res.json(rooms)
+      })
+      .catch(err => {
+        res.status(500).json(err)
+      })
+  }
 }
 
 export default new ScraperController()

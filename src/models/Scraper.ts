@@ -8,6 +8,14 @@ class Scraper {
   getGroups() {
     return ScraperService.getGroups()
   }
+
+  getLecturers() {
+    return ScraperService.getLecturers()
+  }
+
+  getRooms() {
+    return ScraperService.getRooms()
+  }
 }
 
 export default new Scraper()

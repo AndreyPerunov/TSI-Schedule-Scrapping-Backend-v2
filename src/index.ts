@@ -4,7 +4,7 @@ import router from "./router"
 import ScheduleService from "./services/ScheduleService"
 
 app.use(express.json())
-app.use("/api", router)
+app.use("/", router)
 
 ScheduleService.startScheduledScrape()
 ScheduleService.startScheduledGroupScrape()

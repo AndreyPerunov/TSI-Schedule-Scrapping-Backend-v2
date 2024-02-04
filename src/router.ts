@@ -5,7 +5,7 @@ import { Router } from "express"
 const router = Router()
 router.use(cors())
 
-router.get("/schedule", ScraperController.getSchedule)
-router.get("/groups", ScraperController.getGroups)
+router.get("/scrape/schedule", ScraperController.getSchedule)
+router.get("/scrape/groups", ScraperController.getGroups)
 
 export default router
