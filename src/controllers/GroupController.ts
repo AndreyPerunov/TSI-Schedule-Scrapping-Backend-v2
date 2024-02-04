@@ -1,9 +1,9 @@
-import Groups from "../models/Group"
+import Group from "../models/Group"
 import { Request, Response } from "express"
 
 class GroupController {
   getGroups(req: Request, res: Response) {
-    Groups.getGroups()
+    Group.getGroups()
       .then(groups => {
         res.json(groups)
       })
