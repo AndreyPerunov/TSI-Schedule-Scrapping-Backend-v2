@@ -1,5 +1,5 @@
 import schedule from "node-schedule"
-import Scraper from "./ScraperService"
+import ScraperService from "./ScraperService"
 import DatabaseService from "./DatabaseService"
 
 class ScheduleService {
@@ -12,7 +12,7 @@ class ScheduleService {
           for (const group of groups) {
             try {
               if (group.users > 0) {
-                await Scraper.getSchedule({ group: group.groupName })
+                await ScraperService.getSchedule({ group: group.groupName })
                 console.log(`🕐 Finished schedule scraping for group ${group.groupName} ✅`)
               }
             } catch (error) {
@@ -27,7 +27,7 @@ class ScheduleService {
     // At 02:00 on day-of-month 1 in every month (0 2 1 */1 *)
     schedule.scheduleJob("0 2 1 */1 *", () => {
       console.log("🕐 Starting group scraping  at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
-      Scraper.getGroups()
+      ScraperService.getGroups()
         .then(() => {
           console.log("🕐 Finished group scraping✅")
         })
