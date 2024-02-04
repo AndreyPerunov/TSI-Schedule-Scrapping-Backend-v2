@@ -224,16 +224,14 @@ class ScraperService {
       .map(lecture => {
         const [lectureNumber, time, room, group, lecturer, subject, typeOfTheClass, comment] = lecture
         const [startTime, endTime] = time.split(" - ")
-        const timeZoneOffset = 120 // +02:00
-        const start = new Date(`${month} ${day}, ${year} ${startTime}`)
-        const end = new Date(`${month} ${day}, ${year} ${endTime}`)
-        const startTimeAdjusted = new Date(start.getTime() + timeZoneOffset * 60000).toISOString()
-        const endTimeAdjusted = new Date(end.getTime() + timeZoneOffset * 60000).toISOString()
+        const start = new Date(`${month} ${day}, ${year} ${startTime}`).toISOString()
+        const end = new Date(`${month} ${day}, ${year} ${endTime}`).toISOString()
+        console.log(start)
 
         return {
           lectureNumber: parseInt(lectureNumber),
-          start: startTimeAdjusted.replace(".000Z", "+02:00"),
-          end: endTimeAdjusted.replace(".000Z", "+02:00"),
+          start: start,
+          end: end,
           room: room,
           groups: group.split(",").map(group => group.trim()),
           lecturer: lecturer.trim(),
