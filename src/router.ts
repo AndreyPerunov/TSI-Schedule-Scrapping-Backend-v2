@@ -1,6 +1,7 @@
 import ScraperController from "./controllers/ScraperController"
 import GroupController from "./controllers/GroupController"
 import LecturerController from "./controllers/LecturerController"
+import RoomController from "./controllers/RoomController"
 import cors from "cors"
 import { Router } from "express"
 
@@ -14,5 +15,6 @@ router.get("/scrape/rooms", ScraperController.getRooms)
 
 router.get("/api/groups", (req, res) => GroupController.getGroups(req, res))
 router.get("/api/lecturers", (req, res) => LecturerController.getLecturers(req, res))
+router.get("/api/rooms", (req, res) => RoomController.getRooms(req, res))
 
 export default router
