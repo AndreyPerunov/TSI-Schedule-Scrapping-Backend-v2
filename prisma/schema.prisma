@@ -60,7 +60,4 @@ model Lecture {
   comment        String
   start          DateTime
   end            DateTime
-
-  @@unique([roomNumber, start])
-  @@unique([lecturerName, start])
 }

@@ -10,7 +10,7 @@ class ScraperService {
       console.log(`⛏️ Getting Schedule for Days: ${days}` + (group ? `, Group: ${group}` : "") + (lecturer ? `, Lecturer: ${lecturer}` : "") + (room ? `, Room: ${room}` : "") + "🗓️")
 
       // Launch the browser
-      process.stdout.write("Launching Browser")
+      process.stdout.write("⛏️ Launching Browser")
       const browser = await launch({
         args: process.env.NODE_ENV === "production" ? ["--disable-setuid-sandbox", "--no-sandbox", "--single-process", "--no-zygote"] : ["--disable-setuid-sandbox", "--no-sandbox", "--no-zygote"],
         executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : _executablePath(),
@@ -58,20 +58,38 @@ class ScraperService {
           const option = (await page.$x(`//*[@id="form1"]/div/div[1]/div[1]/select/option[text() = "${group}"]`))[0]
           const value = await (await option.getProperty("value")).jsonValue()
           await page.select('select[name="sel-group"]', value as string)
-          await page.waitForSelector('button[name="show"]')
-          await page.click('button[name="show"]')
+          console.log("✅")
+        } else {
+          // If no group is provided, select the first one cause default is student group
+          process.stdout.write("⛏️ Selecting First Group")
+          await page.waitForSelector('select[name="sel-group"]')
+          await page.select('select[name="sel-group"]', "-1")
           console.log("✅")
         }
 
         // Set Lecturer
-        // TODO
         if (lecturer) {
+          process.stdout.write("⛏️ Selecting Lecturer")
+          await page.waitForSelector('select[name="sel-lecturer"]')
+          const option = (await page.$x(`//*[@id="form1"]/div/div[1]/div[2]/select/option[text() = "${lecturer}"]`))[0]
+          const value = await (await option.getProperty("value")).jsonValue()
+          await page.select('select[name="sel-lecturer"]', value as string)
+          console.log("✅")
         }
 
         // Set Room
-        // TODO
         if (room) {
+          process.stdout.write("⛏️ Selecting Room")
+          await page.waitForSelector('select[name="sel-room"]')
+          const option = (await page.$x(`//*[@id="form1"]/div/div[1]/div[3]/select/option[text() = "${room}"]`))[0]
+          const value = await (await option.getProperty("value")).jsonValue()
+          await page.select('select[name="sel-room"]', value as string)
+          console.log("✅")
         }
+
+        // Applying Filters
+        await page.waitForSelector('button[name="show"]')
+        await page.click('button[name="show"]')
 
         // Switch to Day View
         process.stdout.write("⛏️ Switching to Day View")
