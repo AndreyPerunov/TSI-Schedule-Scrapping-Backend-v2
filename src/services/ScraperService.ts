@@ -247,7 +247,7 @@ class ScraperService {
         await Promise.all([page.goto(scheduleUrl), page.waitForNavigation()])
         console.log("✅")
 
-        // Get Groups
+        // Get Lecturers
         process.stdout.write("⛏️ Getting Lecturers")
         const select = await page.$('select[name="sel-lecturer"]')
         const lecturers = await page.evaluate(select => {
@@ -264,6 +264,71 @@ class ScraperService {
         // Send Result
         console.log("⛏️ Lecturers Scraped Successfully✅")
         resolve(lecturers)
+      } catch (error) {
+        console.log("❌")
+        process.stdout.write("⛏️ ")
+        console.error(error)
+        reject(error)
+      } finally {
+        console.log("⛏️ Closing Browser")
+        await browser.close()
+      }
+    })
+  }
+
+  getRooms() {
+    return new Promise(async (resolve, reject) => {
+      // Launch the browser
+      process.stdout.write("⛏️ Launching Browser")
+      const browser = await launch({
+        args: process.env.NODE_ENV === "production" ? ["--disable-setuid-sandbox", "--no-sandbox", "--single-process", "--no-zygote"] : ["--disable-setuid-sandbox", "--no-sandbox", "--no-zygote"],
+        executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : _executablePath(),
+        headless: "new"
+      })
+      console.log("✅")
+
+      try {
+        // Open a new blank page
+        process.stdout.write("⛏️ Opening New Page")
+        const page = await browser.newPage()
+        console.log("✅")
+
+        // Increase Timeout
+        process.stdout.write("⛏️ Increasing Timeout")
+        await page.setDefaultNavigationTimeout(120000)
+        console.log("✅")
+
+        // Set screen size
+        process.stdout.write("⛏️ Setting Viewport")
+        await page.setViewport({ width: 1080, height: 1024 })
+        console.log("✅")
+
+        // Login
+        await this.#login(page)
+
+        // Go to Schedule Url
+        process.stdout.write("⛏️ Navigating to Schedule Page")
+        const scheduleUrl = "https://my.tsi.lv/schedule"
+        await Promise.all([page.goto(scheduleUrl), page.waitForNavigation()])
+        console.log("✅")
+
+        // Get Rooms
+        process.stdout.write("⛏️ Getting Rooms")
+        const select = await page.$('select[name="sel-room"]')
+        const rooms = await page.evaluate(select => {
+          const options = Array.from(select!.querySelectorAll("option"))
+          return options.map(option => option.innerText)
+        }, select)
+        rooms.shift()
+        console.log("✅")
+
+        // Save result to DB
+        console.log("⛏️ Saving Rooms to DB")
+        await DatabaseService.saveRooms(rooms)
+
+        // Send Result
+        console.log("⛏️ Rooms Scraped Successfully✅")
+        resolve(rooms)
       } catch (error) {
         console.log("❌")
         process.stdout.write("⛏️ ")

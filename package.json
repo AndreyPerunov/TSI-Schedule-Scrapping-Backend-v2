@@ -11,9 +11,11 @@
     "typecheck": "tsc --noEmit",
     "scrape:groups": "ts-node src/scripts/getGroups.ts",
     "scrape:lecturers": "ts-node src/scripts/getLecturers.ts",
+    "scrape:rooms": "ts-node src/scripts/getRooms.ts",
     "scrape:schedule-groups": "ts-node src/scripts/getScheduleGroups.ts",
     "scrape:schedule-lecturers": "ts-node src/scripts/getScheduleLecturers.ts",
-    "scrape:schedule": "npm run scrape:schedule-groups && npm run scrape:schedule-lecturers"
+    "scrape:schedule-rooms": "ts-node src/scripts/getScheduleRooms.ts",
+    "scrape:schedule": "npm run scrape:schedule-groups && npm run scrape:schedule-lecturers && npm run scrape:schedule-rooms"
   },
   "keywords": [],
   "author": "",

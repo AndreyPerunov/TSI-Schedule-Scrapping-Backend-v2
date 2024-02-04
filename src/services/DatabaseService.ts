@@ -1,6 +1,6 @@
 import { Lecture } from "../types"
 import { PrismaClient } from "@prisma/client"
-import type { Group, Lecturer } from "@prisma/client"
+import type { Group, Lecturer, Room } from "@prisma/client"
 
 class DatabaseService {
   saveLectures({ lectures, group, lecturer, room }: { lectures: Lecture[]; group?: string; lecturer?: string; room?: string }) {
@@ -90,6 +90,25 @@ class DatabaseService {
     })
   }
 
+  saveRooms(rooms: string[]) {
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+
+      try {
+        for (const room of rooms) {
+          // Check if room already exists. If not, create it
+          await prisma.room.upsert({ where: { roomNumber: room }, update: { roomNumber: room }, create: { roomNumber: room } })
+          console.log(`💾 Updated room ${room}`)
+        }
+        resolve(void 0)
+      } catch (error) {
+        reject(error)
+      } finally {
+        prisma.$disconnect()
+      }
+    })
+  }
+
   getGroups(): Promise<Group[]> {
     return new Promise(async (resolve, reject) => {
       const prisma = new PrismaClient()
@@ -110,6 +129,20 @@ class DatabaseService {
       try {
         const lecturers = await prisma.lecturer.findMany()
         resolve(lecturers)
+      } catch (error) {
+        reject(error)
+      } finally {
+        prisma.$disconnect()
+      }
+    })
+  }
+
+  getRooms(): Promise<Room[]> {
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+      try {
+        const rooms = await prisma.room.findMany()
+        resolve(rooms)
       } catch (error) {
         reject(error)
       } finally {
