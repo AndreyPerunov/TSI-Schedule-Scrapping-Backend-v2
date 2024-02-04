@@ -211,6 +211,71 @@ class ScraperService {
     })
   }
 
+  getLecturers() {
+    return new Promise(async (resolve, reject) => {
+      // Launch the browser
+      process.stdout.write("⛏️ Launching Browser")
+      const browser = await launch({
+        args: process.env.NODE_ENV === "production" ? ["--disable-setuid-sandbox", "--no-sandbox", "--single-process", "--no-zygote"] : ["--disable-setuid-sandbox", "--no-sandbox", "--no-zygote"],
+        executablePath: process.env.NODE_ENV === "production" ? process.env.PUPPETEER_EXECUTABLE_PATH : _executablePath(),
+        headless: "new"
+      })
+      console.log("✅")
+
+      try {
+        // Open a new blank page
+        process.stdout.write("⛏️ Opening New Page")
+        const page = await browser.newPage()
+        console.log("✅")
+
+        // Increase Timeout
+        process.stdout.write("⛏️ Increasing Timeout")
+        await page.setDefaultNavigationTimeout(120000)
+        console.log("✅")
+
+        // Set screen size
+        process.stdout.write("⛏️ Setting Viewport")
+        await page.setViewport({ width: 1080, height: 1024 })
+        console.log("✅")
+
+        // Login
+        await this.#login(page)
+
+        // Go to Schedule Url
+        process.stdout.write("⛏️ Navigating to Schedule Page")
+        const scheduleUrl = "https://my.tsi.lv/schedule"
+        await Promise.all([page.goto(scheduleUrl), page.waitForNavigation()])
+        console.log("✅")
+
+        // Get Groups
+        process.stdout.write("⛏️ Getting Lecturers")
+        const select = await page.$('select[name="sel-lecturer"]')
+        const lecturers = await page.evaluate(select => {
+          const options = Array.from(select!.querySelectorAll("option"))
+          return options.map(option => option.innerText)
+        }, select)
+        lecturers.shift()
+        console.log("✅")
+
+        // Save result to DB
+        console.log("⛏️ Saving Lecturers to DB")
+        await DatabaseService.saveLecturers(lecturers)
+
+        // Send Result
+        console.log("⛏️ Lecturers Scraped Successfully✅")
+        resolve(lecturers)
+      } catch (error) {
+        console.log("❌")
+        process.stdout.write("⛏️ ")
+        console.error(error)
+        reject(error)
+      } finally {
+        console.log("⛏️ Closing Browser")
+        await browser.close()
+      }
+    })
+  }
+
   #formatLectures(inputArray: ScrapedStudyDay, date: ScrapedDate) {
     // date = "Friday, September 15, 2023"
     const dateParts = date.split(", ") // dateParts = ["Friday","September 15","2023"]
@@ -226,7 +291,6 @@ class ScraperService {
         const [startTime, endTime] = time.split(" - ")
         const start = new Date(`${month} ${day}, ${year} ${startTime}`).toISOString()
         const end = new Date(`${month} ${day}, ${year} ${endTime}`).toISOString()
-        console.log(start)
 
         return {
           lectureNumber: parseInt(lectureNumber),

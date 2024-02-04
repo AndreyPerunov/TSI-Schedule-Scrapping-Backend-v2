@@ -1,6 +1,6 @@
 import { Lecture } from "../types"
 import { PrismaClient } from "@prisma/client"
-import type { Group } from "@prisma/client"
+import type { Group, Lecturer } from "@prisma/client"
 
 class DatabaseService {
   saveLectures({ lectures, group, lecturer, room }: { lectures: Lecture[]; group?: string; lecturer?: string; room?: string }) {
@@ -58,15 +58,28 @@ class DatabaseService {
 
       try {
         for (const group of groups) {
-          // Check if group already exists
-          const groupFromDB = await prisma.group.findUnique({
-            where: { groupName: group }
-          })
-          // If not, create it
-          if (!groupFromDB) {
-            const createdGroup = await prisma.group.create({ data: { groupName: group } })
-            console.log(`💾 Created new group ${createdGroup.groupName}`)
-          }
+          // Check if group already exists. If not, create it
+          await prisma.group.upsert({ where: { groupName: group }, update: { groupName: group }, create: { groupName: group } })
+          console.log(`💾 Updated group ${group}`)
+        }
+        resolve(void 0)
+      } catch (error) {
+        reject(error)
+      } finally {
+        prisma.$disconnect()
+      }
+    })
+  }
+
+  saveLecturers(lecturers: string[]) {
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+
+      try {
+        for (const lecturer of lecturers) {
+          // Check if lecturer already exists. If not, create it
+          await prisma.lecturer.upsert({ where: { lecturerName: lecturer }, update: { lecturerName: lecturer }, create: { lecturerName: lecturer } })
+          console.log(`💾 Updated lecturer ${lecturer}`)
         }
         resolve(void 0)
       } catch (error) {
@@ -83,6 +96,20 @@ class DatabaseService {
       try {
         const groups = await prisma.group.findMany()
         resolve(groups)
+      } catch (error) {
+        reject(error)
+      } finally {
+        prisma.$disconnect()
+      }
+    })
+  }
+
+  getLecturers(): Promise<Lecturer[]> {
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+      try {
+        const lecturers = await prisma.lecturer.findMany()
+        resolve(lecturers)
       } catch (error) {
         reject(error)
       } finally {

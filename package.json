@@ -10,6 +10,7 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "scrape:groups": "ts-node src/scripts/getGroups.ts",
+    "scrape:lecturers": "ts-node src/scripts/getLecturers.ts",
     "scrape:schedule-groups": "ts-node src/scripts/getGroupsSchedule.ts"
   },
   "keywords": [],
