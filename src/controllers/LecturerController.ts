@@ -1,9 +1,9 @@
-import Lecture from "../models/Lecture"
+import Lecturer from "../models/Lecturer"
 import { Request, Response } from "express"
 
 class LecturerController {
   getLecturers(req: Request, res: Response) {
-    Lecture.getLecturers()
+    Lecturer.getLecturers()
       .then(lecturers => {
         res.json(lecturers)
       })

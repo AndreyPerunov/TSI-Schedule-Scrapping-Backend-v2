@@ -1,9 +1,9 @@
 import DatabaseService from "../services/DatabaseService"
 
-class Lecture {
+class Lecturer {
   getLecturers() {
     return DatabaseService.getLecturers()
   }
 }
 
-export default new Lecture()
+export default new Lecturer()
