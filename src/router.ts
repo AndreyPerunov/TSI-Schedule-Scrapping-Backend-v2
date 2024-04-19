@@ -2,6 +2,7 @@ import ScheduleController from "./controllers/ScheduleController"
 import GroupController from "./controllers/GroupController"
 import LecturerController from "./controllers/LecturerController"
 import RoomController from "./controllers/RoomController"
+import UserController from "./controllers/UserController"
 import cors from "cors"
 import { Router } from "express"
 
@@ -19,5 +20,7 @@ router.get("/api/lecturers/scrape", LecturerController.scrapeLecturers)
 
 router.get("/api/rooms", RoomController.getRooms)
 router.get("/api/rooms/scrape", RoomController.scrapeRooms)
+
+router.get("/api/user/session", UserController.googleOAuthHandler)
 
 export default router
