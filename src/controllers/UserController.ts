@@ -114,6 +114,12 @@ class UserController {
     console.log("🔑 Getting User")
     return res.json(req.user)
   }
+
+  logout(req: any, res: Response) {
+    console.log("🔑 Logging Out User")
+    res.clearCookie("session")
+    return res.json("Logged out")
+  }
 }
 
 export default new UserController()

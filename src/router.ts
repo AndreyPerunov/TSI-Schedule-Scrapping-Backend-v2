@@ -24,5 +24,6 @@ router.get("/api/rooms/scrape", RoomController.scrapeRooms)
 
 router.get("/api/user/session", UserController.googleOAuthHandler)
 router.get("/api/user", UserController.mustBeLoggedIn, UserController.getUser)
+router.get("/api/user/logout", UserController.logout)
 
 export default router
