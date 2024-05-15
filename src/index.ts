@@ -1,8 +1,10 @@
 import express from "express"
+import cookieParser from "cookie-parser"
 const app = express()
 import router from "./router"
 import ScheduleService from "./services/ScheduleService"
 
+app.use(cookieParser())
 app.use(express.json())
 app.use("/", router)
 

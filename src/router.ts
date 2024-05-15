@@ -7,11 +7,11 @@ import cors from "cors"
 import { Router } from "express"
 
 const router = Router()
-router.use(cors())
+router.use(cors({ origin: process.env.CLIENT_URL, credentials: true }))
 
 // You must provide at least one of the following: Group, Lecturer, Room
-router.get("/api/schedule", ScheduleController.getSchedule)
-router.post("/api/schedule", ScheduleController.createCalendar)
+router.get("/api/schedule", UserController.mustBeLoggedIn, ScheduleController.getSchedule)
+router.post("/api/schedule", UserController.mustBeLoggedIn, ScheduleController.createCalendar)
 
 router.get("/api/groups", GroupController.getGroups)
 router.get("/api/groups/scrape", GroupController.scrapeGroups)
@@ -23,5 +23,6 @@ router.get("/api/rooms", RoomController.getRooms)
 router.get("/api/rooms/scrape", RoomController.scrapeRooms)
 
 router.get("/api/user/session", UserController.googleOAuthHandler)
+router.get("/api/user", UserController.mustBeLoggedIn, UserController.getUser)
 
 export default router

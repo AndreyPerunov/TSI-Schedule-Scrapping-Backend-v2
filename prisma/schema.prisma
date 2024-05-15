@@ -69,6 +69,7 @@ model User {
   googleEmail   String    @unique
   googleName    String
   googlePicture String
+  refreshToken  String
   role          String
   Group         Group?    @relation(fields: [groupRef], references: [groupName])
   groupRef      String?

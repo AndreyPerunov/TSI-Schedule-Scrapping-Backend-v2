@@ -1,5 +1,6 @@
 import Schedule from "../models/Schedule"
 import { Request, Response } from "express"
+import User from "../models/User"
 
 class ScheduleController {
   getSchedule(req: Request, res: Response) {
@@ -20,10 +21,16 @@ class ScheduleController {
       })
   }
 
-  async createCalendar(req: Request, res: Response) {
+  async createCalendar(req: any, res: Response) {
     try {
       const schedule = new Schedule()
-      const { access_token, lectures, days, calendar_name } = req.body
+
+      // get lectures, days, and calendar_name from the request body
+      const { lectures, days, calendar_name } = req.body
+
+      // user data is got from MustBeLoggedIn middleware
+      const access_token = await new User({ googleEmail: req.user.googleEmail }).getAccessToken()
+
       await schedule.createCalendar({ access_token, lectures, days, calendar_name })
       res.json({ message: "Calendar created successfully" })
     } catch (error) {
