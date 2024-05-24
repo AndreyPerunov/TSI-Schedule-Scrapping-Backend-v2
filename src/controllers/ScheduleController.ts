@@ -12,7 +12,7 @@ class ScheduleController {
     const schedule = new Schedule()
 
     schedule
-      .scrapeSchedule({ group, lecturer, room, days })
+      .getSchedule({ group, lecturer, room, days })
       .then(schedule => {
         res.json(schedule)
       })

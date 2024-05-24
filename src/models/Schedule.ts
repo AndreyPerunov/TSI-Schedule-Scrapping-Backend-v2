@@ -1,5 +1,7 @@
 import ScraperService from "../services/ScraperService"
 import { google } from "googleapis"
+import { PrismaClient } from "@prisma/client"
+import type {} from "@prisma/client"
 
 type lectureEvent = {
   title: string
@@ -11,8 +13,68 @@ type lectureEvent = {
 }
 
 class Schedule {
-  scrapeSchedule({ group, lecturer, room, days = 30 }: { group?: string; lecturer?: string; room?: string; days?: number }) {
-    return ScraperService.getSchedule({ group, lecturer, room, days })
+  getSchedule({ group, lecturer, room, days = 30 }: { group?: string; lecturer?: string; room?: string; days?: number }) {
+    console.log("📅 Getting schedule")
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+      try {
+        // checking if there was a scrape today
+        const isScrapedToday = await this.#isScrapedToday(group, lecturer, room, days)
+        if (!isScrapedToday) {
+          console.log("📅 Schedule not scraped, scraping schedule")
+          const schedule = await ScraperService.getSchedule({ group, lecturer, room, days })
+          resolve(schedule)
+          return
+        } else {
+          console.log("📅 Schedule already scraped today, getting it from DB")
+          // case when scraped for group
+          if (group && !lecturer && !room) {
+            const schedule = await prisma.lecture.findMany({
+              where: {
+                group: {
+                  groupName: group
+                }
+              }
+            })
+            await prisma.$disconnect()
+            resolve(schedule)
+            return
+          }
+
+          // case when scraped for lecturer
+          if (!group && lecturer && !room) {
+            const schedule = await prisma.lecture.findMany({
+              where: {
+                lecturer: {
+                  lecturerName: lecturer
+                }
+              }
+            })
+            await prisma.$disconnect()
+            resolve(schedule)
+            return
+          }
+
+          // case when scraped for room
+          if (!group && !lecturer && room) {
+            const schedule = await prisma.lecture.findMany({
+              where: {
+                room: {
+                  roomNumber: room
+                }
+              }
+            })
+            await prisma.$disconnect()
+            resolve(schedule)
+            return
+          }
+        }
+      } catch (error) {
+        console.error(error, "❌ Failed to get schedule")
+        reject(new Error("❌ Failed to get schedule"))
+      }
+    })
+    // return ScraperService.getSchedule({ group, lecturer, room, days })
   }
   createCalendar({ access_token, lectures, days, calendar_name }: { access_token: string; lectures: lectureEvent[]; days: number; calendar_name: string }): Promise<{ message: string } | { message: string; error: any }> {
     return new Promise(async (resolve, reject) => {
@@ -81,6 +143,126 @@ class Schedule {
       } catch (error) {
         console.log("❌ Error creating calendar", error)
         reject({ message: "Something went wrong. Please try again later.", error })
+      }
+    })
+  }
+
+  #isScrapedToday(group?: string, lecturer?: string, room?: string, days?: number) {
+    console.log("📅 Checking if scraped today", { group, lecturer, room, days })
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+      try {
+        // checking if there was a scrape for group today
+        if (days == 30 && group && !lecturer && !room) {
+          console.log("📅 Checking GROUP")
+          // Getting group from database
+          console.log("Getting group from database")
+          const groupObj = await prisma.group.findUnique({
+            where: {
+              groupName: group
+            }
+          })
+          await prisma.$disconnect()
+
+          console.log(`groupObj?: ${groupObj ? "true" : "false"}`)
+          if (groupObj == null) {
+            console.log("❌ Group not found")
+            reject(new Error("❌ Group not found"))
+            return
+          }
+
+          const { scrapeTimeStamp } = groupObj
+
+          console.log("Scrape time stamp: ", { scrapeTimeStamp })
+          if (scrapeTimeStamp == null) {
+            console.log("⚠️ No scrape time stamp")
+            resolve(false)
+            return
+          }
+
+          console.log("Checking if scrape time stamp is less than 24 hours", { now: new Date().getTime(), scrapeTimeStamp: scrapeTimeStamp.getTime(), diff: new Date().getTime() - scrapeTimeStamp.getTime(), less: new Date().getTime() - scrapeTimeStamp.getTime() < 1000 * 60 * 60 * 24 })
+          if (new Date().getTime() - scrapeTimeStamp.getTime() < 1000 * 60 * 60 * 24) {
+            resolve(true)
+            return
+          }
+        }
+
+        // checking if there was a scrape for lecturer today
+        if (days == 30 && !group && lecturer && !room) {
+          console.log("📅 Checking LECTURER")
+          console.log("Getting lecturer from database")
+          // Getting lecturer from database
+          const lecturerObj = await prisma.lecturer.findUnique({
+            where: {
+              lecturerName: lecturer
+            }
+          })
+          await prisma.$disconnect()
+
+          console.log(`lecturerObj?: ${lecturerObj ? "true" : "false"}`)
+          if (lecturerObj == null) {
+            console.log("❌ Lecturer not found")
+            reject(new Error("❌ Lecturer not found"))
+            return
+          }
+
+          const { scrapeTimeStamp } = lecturerObj
+
+          console.log("Scrape time stamp: ", { scrapeTimeStamp })
+          if (scrapeTimeStamp == null) {
+            console.log("⚠️ No scrape time stamp")
+            resolve(false)
+            return
+          }
+
+          console.log("Checking if scrape time stamp is less than 24 hours", { now: new Date().getTime(), scrapeTimeStamp: scrapeTimeStamp.getTime(), diff: new Date().getTime() - scrapeTimeStamp.getTime(), less: new Date().getTime() - scrapeTimeStamp.getTime() < 1000 * 60 * 60 * 24 })
+
+          if (new Date().getTime() - scrapeTimeStamp.getTime() < 1000 * 60 * 60 * 24) {
+            resolve(true)
+            return
+          }
+        }
+
+        // checking if there was a scrape for room today
+        if (days == 30 && !group && !lecturer && room) {
+          console.log("📅 Checking ROOM")
+          console.log("Getting room from database")
+          // Getting room from database
+          const roomObj = await prisma.room.findUnique({
+            where: {
+              roomNumber: room
+            }
+          })
+          await prisma.$disconnect()
+
+          console.log(`roomObj?: ${roomObj ? "true" : "false"}`)
+          if (roomObj == null) {
+            console.log("❌ Room not found")
+            reject(new Error("❌ Room not found"))
+            return
+          }
+
+          const { scrapeTimeStamp } = roomObj
+
+          console.log("Scrape time stamp: ", { scrapeTimeStamp })
+          if (scrapeTimeStamp == null) {
+            console.log("⚠️ No scrape time stamp")
+            resolve(false)
+            return
+          }
+
+          console.log("Checking if scrape time stamp is less than 24 hours", { now: new Date().getTime(), scrapeTimeStamp: scrapeTimeStamp.getTime(), diff: new Date().getTime() - scrapeTimeStamp.getTime(), less: new Date().getTime() - scrapeTimeStamp.getTime() < 1000 * 60 * 60 * 24 })
+          if (new Date().getTime() - scrapeTimeStamp.getTime() < 1000 * 60 * 60 * 24) {
+            resolve(true)
+            return
+          }
+        }
+
+        console.log("⚠️ No scrape today", { group, lecturer, room, days })
+        resolve(false)
+      } catch (error) {
+        console.error(error, "❌ Failed to get schedule")
+        reject(new Error("❌ Failed to get schedule"))
       }
     })
   }
