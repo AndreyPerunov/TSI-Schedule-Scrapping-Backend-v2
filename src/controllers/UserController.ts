@@ -20,9 +20,7 @@ class UserController {
   }
 
   async googleOAuthHandler(req: Request, res: Response) {
-    console.log("🔑 Starting Registration Process")
     try {
-      //security: add Cross-Site Request Forgery (CSRF) attack protection (state)
       // get the code from query string
       console.log("🔑 Getting code from query string")
       const code = req.query.code as string
@@ -42,6 +40,13 @@ class UserController {
       await oAuth2Client.setCredentials(tokens)
       const { access_token, refresh_token } = oAuth2Client.credentials
 
+      const access_token_expires_in = oAuth2Client.credentials.expiry_date! - Date.now()
+      console.log(`🔑 Access Token Expires in: ${access_token_expires_in}ms`)
+      const access_token_exists = access_token !== undefined || access_token !== null
+      const refresh_token_exists = refresh_token !== undefined || refresh_token !== null
+
+      console.log(`🔑 access_token: ${access_token_exists}, refresh_token: ${refresh_token_exists}`)
+
       // get user info from Google
       console.log("🔑 Fetching Google User")
       const googleUser = await new User().getGoogleUser(access_token as string)
@@ -54,26 +59,41 @@ class UserController {
         return res.redirect(`${process.env.CLIENT_URL}/login/error`)
       }
 
-      // create user
-      console.log("🔑 Upserting User")
-      const user = new User({
-        googleEmail: googleUser.email as string,
-        googleName: googleUser.name as string,
-        googlePicture: googleUser.picture as string,
-        refreshToken: refresh_token as string,
-        role: state.role,
-        group: state.group,
-        name: state.name
-      })
-      await user.create()
+      let user: User | null = null
+
+      if (state.from == "login") {
+        console.log("🔑 LOGIN")
+        console.log("🔑 Checking if User Exists")
+        user = await new User().getUserByEmail(googleUser.email as string)
+        if (user) {
+          console.log("🔑 User Exists")
+        } else {
+          console.log("❌ User Does Not Exist")
+          return res.redirect(`${process.env.CLIENT_URL}/login/error`)
+        }
+      } else {
+        console.log("🔑 SIGNUP")
+        // create user
+        console.log("🔑 Creating User")
+        user = new User({
+          googleEmail: googleUser.email as string,
+          googleName: googleUser.name as string,
+          googlePicture: googleUser.picture as string,
+          refreshToken: refresh_token as string,
+          role: state.role,
+          group: state.group,
+          name: state.name
+        })
+        await user.create()
+      }
 
       const userData = {
-        googleEmail: googleUser.email,
-        googleName: googleUser.name,
-        googlePicture: googleUser.picture,
-        role: state.role,
-        group: state.group,
-        name: state.name
+        googleEmail: user.googleEmail,
+        googleName: user.googleName,
+        googlePicture: user.googlePicture,
+        role: user.role,
+        group: user.group,
+        name: user.name
       }
 
       // session cookie

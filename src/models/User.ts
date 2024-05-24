@@ -158,6 +158,33 @@ class User {
       }
     })
   }
+
+  getUserByEmail(email: string): Promise<User | null> {
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+      try {
+        const user = await prisma.user.findUnique({
+          where: {
+            googleEmail: email
+          }
+        })
+        await prisma.$disconnect()
+
+        resolve({
+          googleEmail: user?.googleEmail,
+          googleName: user?.googleName,
+          googlePicture: user?.googlePicture,
+          role: user?.role,
+          group: user?.groupRef || "",
+          name: user?.lecturerRef || "",
+          refreshToken: user?.refreshToken
+        } as User | null)
+      } catch (error: any) {
+        console.error(error, "❌ Failed to get user by email")
+        reject(new Error("❌ Failed to get user by email"))
+      }
+    })
+  }
 }
 
 export default User
