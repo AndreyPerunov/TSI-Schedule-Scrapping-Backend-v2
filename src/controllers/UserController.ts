@@ -98,8 +98,8 @@ class UserController {
 
       // session cookie
       console.log("🔑 Setting Session Cookie")
-      const expires = new Date(Date.now() + 30 * 60 * 1000) // 30 minutes
-      const session = jwt.sign(userData, process.env.JWT_SECRET as string, { expiresIn: "30min" })
+      const expires = new Date(Date.now() + 90 * 60 * 1000) // 90 minutes
+      const session = jwt.sign(userData, process.env.JWT_SECRET as string, { expiresIn: "90min" })
       res.cookie("session", session, {
         expires,
         httpOnly: true
