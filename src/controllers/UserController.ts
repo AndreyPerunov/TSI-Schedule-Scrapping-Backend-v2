@@ -56,7 +56,7 @@ class UserController {
       console.log("🔑 Checking if email is verified")
       if (!googleUser.email_verified) {
         console.log("❌ Email is not verified")
-        return res.redirect(`${process.env.CLIENT_URL}/login/error`)
+        return res.redirect(`${process.env.CLIENT_URL}/login/error?error_message=Email is not verified. Please verify your email.`)
       }
 
       let user: User | null = null
@@ -65,11 +65,11 @@ class UserController {
         console.log("🔑 LOGIN")
         console.log("🔑 Checking if User Exists")
         user = await new User().getUserByEmail(googleUser.email as string)
-        if (user) {
+        if (user?.googleEmail && user?.googleName && user?.googlePicture && user?.refreshToken && user?.role && (user?.group || user?.name)) {
           console.log("🔑 User Exists")
         } else {
           console.log("❌ User Does Not Exist")
-          return res.redirect(`${process.env.CLIENT_URL}/login/error`)
+          return res.redirect(`${process.env.CLIENT_URL}/login/error?error_message=You are not registered. Please sign up.`)
         }
       } else {
         console.log("🔑 SIGNUP")
