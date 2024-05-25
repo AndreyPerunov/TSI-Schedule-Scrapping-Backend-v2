@@ -1,26 +1,70 @@
 import schedule from "node-schedule"
 import ScraperService from "./ScraperService"
-import DatabaseService from "./DatabaseService"
+import { PrismaClient } from "@prisma/client"
+import type { Group, Lecturer, Room } from "@prisma/client"
 
 class ScheduleService {
   startScheduledScrape() {
     // At 06:00 on every day-of-month. (0 6 */1 * *)
-    schedule.scheduleJob("0 6 */1 * *", () => {
+    schedule.scheduleJob("0 6 */1 * *", async () => {
       console.log("🕐 Starting schedule scraping at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
-      DatabaseService.getGroups()
-        .then(async groups => {
-          for (const group of groups) {
-            try {
-              if (group.users > 0) {
-                await ScraperService.getSchedule({ group: group.groupName })
-                console.log(`🕐 Finished schedule scraping for group ${group.groupName} ✅`)
+      const prisma = new PrismaClient()
+      try {
+        // get active groups
+        console.log("🕐 Getting active groups")
+        const groups = await prisma.user
+          .findMany({
+            where: {
+              groupRef: {
+                not: null
               }
-            } catch (error) {
-              console.log(`🕐 Failed to scrape schedule for group ${group.groupName} ❌`)
+            },
+            select: {
+              groupRef: true
             }
+          })
+          .then(data => data.map(item => item.groupRef))
+
+        console.log({ groups })
+
+        console.log("🕐 Getting active lecturers")
+        // get active lecturers
+        const lecturers = await prisma.user
+          .findMany({
+            where: {
+              lecturerRef: {
+                not: null
+              }
+            },
+            select: {
+              lecturerRef: true
+            }
+          })
+          .then(data => data.map(item => item.lecturerRef))
+
+        console.log({ lecturers })
+
+        console.log("🕐 Scraping schedule for groups")
+        // scrape schedule for groups
+        if (groups.length > 0) {
+          for (const group of groups) {
+            if (group) await ScraperService.getSchedule({ group: group })
           }
-        })
-        .catch(error => console.log(error))
+        }
+
+        console.log("🕐 Scraping schedule for lecturers")
+        // scrape schedule for lecturers
+        if (lecturers.length > 0) {
+          for (const lecturer of lecturers) {
+            if (lecturer) await ScraperService.getSchedule({ lecturer: lecturer })
+          }
+        }
+      } catch (error) {
+        console.log("🕐 Failed to scrape schedule❌", error)
+      } finally {
+        prisma.$disconnect()
+        console.log("🕐 Finished schedule scraping✅")
+      }
     })
   }
   startScheduledGroupScrape() {
