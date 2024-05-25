@@ -1,7 +1,6 @@
 import schedule from "node-schedule"
 import ScraperService from "./ScraperService"
 import { PrismaClient } from "@prisma/client"
-import type { Group, Lecturer, Room } from "@prisma/client"
 
 class ScheduleService {
   startScheduledScrape() {
@@ -67,16 +66,45 @@ class ScheduleService {
       }
     })
   }
+
   startScheduledGroupScrape() {
     // At 02:00 on day-of-month 1 in every month (0 2 1 */1 *)
     schedule.scheduleJob("0 2 1 */1 *", () => {
-      console.log("🕐 Starting group scraping  at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
+      console.log("🕐 Starting group scraping at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
       ScraperService.getGroups()
         .then(() => {
           console.log("🕐 Finished group scraping✅")
         })
         .catch(error => {
-          console.log("🕐 Failed tp scrape groups❌")
+          console.log("🕐 Failed to scrape groups❌")
+        })
+    })
+  }
+
+  startScheduledLecturersScrape() {
+    // At 03:00 on day-of-month 1 in every month (0 3 1 */1 *)
+    schedule.scheduleJob("0 3 1 */1 *", () => {
+      console.log("🕐 Starting lecturers scraping at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
+      ScraperService.getLecturers()
+        .then(() => {
+          console.log("🕐 Finished lecturers scraping✅")
+        })
+        .catch(error => {
+          console.log("🕐 Failed to scrape lecturers❌")
+        })
+    })
+  }
+
+  startScheduledRoomsScrape() {
+    // At 04:00 on day-of-month 1 in every month (0 4 1 */1 *)
+    schedule.scheduleJob("0 4 1 */1 *", () => {
+      console.log("🕐 Starting rooms scraping at " + new Date().getHours() + ":" + new Date().getMinutes() + ":" + new Date().getSeconds())
+      ScraperService.getRooms()
+        .then(() => {
+          console.log("🕐 Finished rooms scraping✅")
+        })
+        .catch(error => {
+          console.log("🕐 Failed to scrape rooms❌")
         })
     })
   }

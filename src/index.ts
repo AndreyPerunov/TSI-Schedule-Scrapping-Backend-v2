@@ -10,6 +10,8 @@ app.use("/", router)
 
 ScheduleService.startScheduledScrape()
 ScheduleService.startScheduledGroupScrape()
+ScheduleService.startScheduledLecturersScrape()
+ScheduleService.startScheduledRoomsScrape()
 
 app.get("/", (req, res) => {
   res.send("TSI Web Scrapping API is up and running!")
