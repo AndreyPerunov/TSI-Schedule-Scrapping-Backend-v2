@@ -13,8 +13,6 @@ model Group {
   scrapeTimeStamp DateTime?
   createdAt       DateTime? @default(now())
   updatedAt       DateTime? @updatedAt
-  subscribers     Int       @default(0)
-  users           Int       @default(0)
   Lecture         Lecture[]
   User            User[]
 }
@@ -25,8 +23,6 @@ model Lecturer {
   scrapeTimeStamp DateTime?
   createdAt       DateTime? @default(now())
   updatedAt       DateTime? @updatedAt
-  subscribers     Int       @default(0)
-  users           Int       @default(0)
   Lecture         Lecture[]
   User            User[]
 }
@@ -37,8 +33,6 @@ model Room {
   scrapeTimeStamp DateTime?
   createdAt       DateTime? @default(now())
   updatedAt       DateTime? @updatedAt
-  subscribers     Int       @default(0)
-  users           Int       @default(0)
   Lecture         Lecture[]
 }
 
