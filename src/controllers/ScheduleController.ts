@@ -38,6 +38,17 @@ class ScheduleController {
       res.status(500).json("Something went wrong. Please try again later.")
     }
   }
+
+  async getLastScrapeTimeStamp(req: Request, res: Response) {
+    const schedule = new Schedule()
+    try {
+      const timestamp = await schedule.getLastScrapeTimeStamp()
+      res.json({ timestamp })
+    } catch (error) {
+      console.log("❌ Error getting last scrape timestamp", error)
+      res.status(500).json("Something went wrong. Please try again later.")
+    }
+  }
 }
 
 export default new ScheduleController()

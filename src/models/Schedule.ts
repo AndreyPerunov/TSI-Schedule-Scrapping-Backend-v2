@@ -266,6 +266,61 @@ class Schedule {
       }
     })
   }
+
+  async getLastScrapeTimeStamp() {
+    console.log("📅 Getting last scrape time stamp")
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+      try {
+        const group = await prisma.group.findFirst({
+          orderBy: {
+            scrapeTimeStamp: "desc"
+          },
+          where: {
+            scrapeTimeStamp: {
+              not: null
+            }
+          }
+        })
+        const lecturer = await prisma.lecturer.findFirst({
+          orderBy: {
+            scrapeTimeStamp: "desc"
+          },
+          where: {
+            scrapeTimeStamp: {
+              not: null
+            }
+          }
+        })
+        const room = await prisma.room.findFirst({
+          orderBy: {
+            scrapeTimeStamp: "desc"
+          },
+          where: {
+            scrapeTimeStamp: {
+              not: null
+            }
+          }
+        })
+        await prisma.$disconnect()
+
+        const groupScrapeTimeStamp = group?.scrapeTimeStamp
+        const lecturerScrapeTimeStamp = lecturer?.scrapeTimeStamp
+        const roomScrapeTimeStamp = room?.scrapeTimeStamp
+        console.log("📅 Group scrape time stamp", groupScrapeTimeStamp)
+        console.log("📅 Lecturer scrape time stamp", lecturerScrapeTimeStamp)
+        console.log("📅 Room scrape time stamp", roomScrapeTimeStamp)
+
+        const lastScrapeTimeStamp = [groupScrapeTimeStamp || 0, lecturerScrapeTimeStamp || 0, roomScrapeTimeStamp || 0].reduce((a, b) => (a > b ? a : b))
+        console.log("📅 Last scrape time stamp", lastScrapeTimeStamp)
+
+        resolve(lastScrapeTimeStamp)
+      } catch (error) {
+        console.error(error, "❌ Failed to get last scrape time stamp")
+        reject(new Error("❌ Failed to get last scrape time stamp"))
+      }
+    })
+  }
 }
 
 export default Schedule
