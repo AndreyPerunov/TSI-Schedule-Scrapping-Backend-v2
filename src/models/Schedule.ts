@@ -1,7 +1,6 @@
 import ScraperService from "../services/ScraperService"
 import { google } from "googleapis"
 import { PrismaClient } from "@prisma/client"
-import type {} from "@prisma/client"
 
 type lectureEvent = {
   title: string

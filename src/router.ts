@@ -16,6 +16,7 @@ router.get("/api/schedule/last-scrape-timestamp", ScheduleController.getLastScra
 
 router.get("/api/groups", GroupController.getGroups)
 router.get("/api/groups/scrape", GroupController.scrapeGroups)
+router.get("/api/groups/active", GroupController.getActiveGroups)
 
 router.get("/api/lecturers", LecturerController.getLecturers)
 router.get("/api/lecturers/scrape", LecturerController.scrapeLecturers)

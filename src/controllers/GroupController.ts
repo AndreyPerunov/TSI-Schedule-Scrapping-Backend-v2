@@ -13,10 +13,23 @@ class GroupController {
         res.status(500).json(err)
       })
   }
+
   scrapeGroups(req: Request, res: Response) {
     const group = new Group()
     group
       .scrapeGroups()
+      .then(groups => {
+        res.json(groups)
+      })
+      .catch(err => {
+        res.status(500).json(err)
+      })
+  }
+
+  getActiveGroups(req: Request, res: Response) {
+    const group = new Group()
+    group
+      .getActiveGroups()
       .then(groups => {
         res.json(groups)
       })
