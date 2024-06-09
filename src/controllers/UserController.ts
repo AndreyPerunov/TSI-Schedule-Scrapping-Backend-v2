@@ -140,6 +140,30 @@ class UserController {
     res.clearCookie("session")
     return res.json("Logged out")
   }
+
+  getStudents(req: any, res: Response) {
+    const user = new User()
+    user
+      .getStudents()
+      .then(students => {
+        res.json(students)
+      })
+      .catch(err => {
+        res.status(500).json(err)
+      })
+  }
+
+  getLecturers(req: any, res: Response) {
+    const user = new User()
+    user
+      .getLecturers()
+      .then(lecturers => {
+        res.json(lecturers)
+      })
+      .catch(err => {
+        res.status(500).json(err)
+      })
+  }
 }
 
 export default new UserController()

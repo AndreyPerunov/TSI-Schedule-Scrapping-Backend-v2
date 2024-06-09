@@ -185,6 +185,54 @@ class User {
       }
     })
   }
+
+  async getStudents() {
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+      prisma.user
+        .findMany({
+          where: {
+            role: "student"
+          },
+          select: {
+            googleName: true
+          }
+        })
+        .then(students => {
+          resolve(students.map(student => student.googleName))
+        })
+        .catch(err => {
+          reject(err)
+        })
+        .finally(() => {
+          prisma.$disconnect()
+        })
+    })
+  }
+
+  async getLecturers() {
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+      prisma.user
+        .findMany({
+          where: {
+            role: "lecturer"
+          },
+          select: {
+            googleName: true
+          }
+        })
+        .then(lecturers => {
+          resolve(lecturers.map(lecturer => lecturer.googleName))
+        })
+        .catch(err => {
+          reject(err)
+        })
+        .finally(() => {
+          prisma.$disconnect()
+        })
+    })
+  }
 }
 
 export default User
