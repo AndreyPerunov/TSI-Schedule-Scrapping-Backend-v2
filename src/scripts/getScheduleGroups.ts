@@ -1,19 +1,38 @@
 import ScraperService from "../services/ScraperService"
-import DatabaseService from "../services/DatabaseService"
+import { PrismaClient } from "@prisma/client"
 
-console.log("📜 Scraping schedule for groups...")
-DatabaseService.getGroups()
-  .then(async groups => {
-    for (const group of groups) {
-      if (group.users > 0 || group.subscribers > 0) {
-        await ScraperService.getSchedule({ group: group.groupName })
-          .then(() => console.log(`📜 Finished scraping for group ${group.groupName} ✅`))
-          .catch(() => console.log(`📜 Failed to scrape schedule for group ${group.groupName} ❌`))
+;(async () => {
+  console.log("📜 Scraping schedule for groups...")
+  const prisma = new PrismaClient()
+  try {
+    // get active groups
+    console.log("📜 Getting active groups")
+    const groups = await prisma.user
+      .findMany({
+        where: {
+          groupRef: {
+            not: null
+          }
+        },
+        select: {
+          groupRef: true
+        }
+      })
+      .then(data => data.map(item => item.groupRef))
+
+    console.log({ groups })
+
+    console.log("📜 Scraping schedule for groups")
+    // scrape schedule for groups
+    if (groups.length > 0) {
+      for (const group of groups) {
+        if (group) await ScraperService.getSchedule({ group: group })
       }
     }
+  } catch (error) {
+    console.log("📜 Failed to scrape schedule❌", error)
+  } finally {
+    prisma.$disconnect()
     console.log("📜 Finished scraping for groups ✅")
-  })
-  .catch(error => {
-    console.log("📜 Failed to get schedule for groups❌")
-    console.error(error)
-  })
+  }
+})()

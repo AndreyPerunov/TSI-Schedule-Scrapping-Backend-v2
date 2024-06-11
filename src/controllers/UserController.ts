@@ -1,4 +1,3 @@
-import { log } from "console"
 import User from "../models/User"
 import { Request, Response } from "express"
 import { google } from "googleapis"

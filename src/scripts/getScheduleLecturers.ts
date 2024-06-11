@@ -1,19 +1,38 @@
 import ScraperService from "../services/ScraperService"
-import DatabaseService from "../services/DatabaseService"
+import { PrismaClient } from "@prisma/client"
 
-console.log("📜 Scraping schedule for lecturers...")
-DatabaseService.getLecturers()
-  .then(async lecturers => {
-    for (const lecturer of lecturers) {
-      if (lecturer.users > 0 || lecturer.subscribers > 0) {
-        await ScraperService.getSchedule({ lecturer: lecturer.lecturerName })
-          .then(() => console.log(`📜 Finished scraping for group ${lecturer.lecturerName} ✅`))
-          .catch(() => console.log(`📜 Failed to scrape schedule for group ${lecturer.lecturerName} ❌`))
+;(async () => {
+  console.log("📜 Scraping schedule for lecturers...")
+  const prisma = new PrismaClient()
+  try {
+    console.log("📜 Getting active lecturers")
+    // get active lecturers
+    const lecturers = await prisma.user
+      .findMany({
+        where: {
+          lecturerRef: {
+            not: null
+          }
+        },
+        select: {
+          lecturerRef: true
+        }
+      })
+      .then(data => data.map(item => item.lecturerRef))
+
+    console.log({ lecturers })
+
+    console.log("📜 Scraping schedule for lecturers")
+    // scrape schedule for lecturers
+    if (lecturers.length > 0) {
+      for (const lecturer of lecturers) {
+        if (lecturer) await ScraperService.getSchedule({ lecturer: lecturer })
       }
     }
-    console.log("📜 Finished scraping for lecturers ✅")
-  })
-  .catch(error => {
-    console.log("📜 Failed to get schedule for lecturers ❌")
-    console.error(error)
-  })
+  } catch (error) {
+    console.log("📜 Failed to scrape schedule for lecturers❌", error)
+  } finally {
+    prisma.$disconnect()
+    console.log("📜 Finished schedule scraping for lecturers✅")
+  }
+})()

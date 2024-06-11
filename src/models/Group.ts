@@ -1,11 +1,11 @@
-import DatabaseService from "../services/DatabaseService"
 import ScraperService from "../services/ScraperService"
-import { google } from "googleapis"
 import { PrismaClient } from "@prisma/client"
+import type { Group as GroupDB } from "@prisma/client"
 
 class Group {
-  getGroups() {
-    return DatabaseService.getGroups()
+  getGroups(): Promise<GroupDB[]> {
+    const prisma = new PrismaClient()
+    return prisma.group.findMany()
   }
   scrapeGroups() {
     return ScraperService.getGroups()
