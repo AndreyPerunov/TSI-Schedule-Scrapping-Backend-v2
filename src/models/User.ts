@@ -1,7 +1,7 @@
 import axios from "axios"
 import { PrismaClient } from "@prisma/client"
-import type {} from "@prisma/client"
 import { google } from "googleapis"
+import { TRole, IFullUserData } from "../types"
 
 interface GoogleTokensResult {
   access_token: string
@@ -21,61 +21,22 @@ interface GoogleUserResult {
   locale: string
 }
 
-class User {
+abstract class User {
   googleEmail: string
   googleName: string
   googlePicture: string
-  role: string
-  group: string
-  name: string
+  role: TRole
   refreshToken: string
 
-  constructor({ googleEmail, googleName, googlePicture, role, group, name, refreshToken }: { googleEmail?: string | undefined; googleName?: string | undefined; googlePicture?: string | undefined; role?: string | undefined; group?: string | undefined; name?: string | undefined; refreshToken?: string } = {}) {
-    this.googleEmail = googleEmail || ""
-    this.googleName = googleName || ""
-    this.googlePicture = googlePicture || ""
-    this.role = role || ""
-    this.group = group || ""
-    this.name = name || ""
-    this.refreshToken = refreshToken || ""
+  constructor({ googleEmail, googleName, googlePicture, role, refreshToken }: { googleEmail: string; googleName: string; googlePicture: string; role: TRole; refreshToken: string }) {
+    this.googleEmail = googleEmail
+    this.googleName = googleName
+    this.googlePicture = googlePicture
+    this.role = role
+    this.refreshToken = refreshToken
   }
 
-  async create() {
-    const prisma = new PrismaClient()
-    try {
-      // check if user exists
-      const user = await prisma.user.findUnique({
-        where: {
-          googleEmail: this.googleEmail
-        }
-      })
-
-      // if user exists, throw error
-      if (user) {
-        throw new Error("❌ User already exists")
-      }
-
-      // create user
-      await prisma.user.create({
-        data: {
-          googleEmail: this.googleEmail,
-          googleName: this.googleName,
-          googlePicture: this.googlePicture,
-          refreshToken: this.refreshToken,
-          role: this.role,
-          groupRef: this.group === "" ? null : this.group,
-          lecturerRef: this.name === "" ? null : this.name
-        }
-      })
-    } catch (error: any) {
-      console.error(error, "❌ Failed to create user")
-      throw new Error("❌ Failed to create user")
-    } finally {
-      await prisma.$disconnect()
-    }
-  }
-
-  async getUserOAuthTokens({ code }: { code: string }): Promise<GoogleTokensResult> {
+  static async getUserOAuthTokens({ code }: { code: string }): Promise<GoogleTokensResult> {
     const url = "https://oauth2.googleapis.com/token"
     const values = {
       code,
@@ -100,21 +61,7 @@ class User {
     }
   }
 
-  async getGoogleUserV1({ id_token, access_token }: { id_token: string; access_token: string }): Promise<GoogleUserResult> {
-    try {
-      const res = await axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${access_token}`, {
-        headers: {
-          Authorization: `Bearer ${id_token}`
-        }
-      })
-      return res.data
-    } catch (error: any) {
-      console.error(error, "❌ Failed to fetch Google user")
-      throw new Error("❌ Failed to fetch Google user")
-    }
-  }
-
-  async getGoogleUser(access_token: string): Promise<GoogleUserResult> {
+  static async getGoogleUser(access_token: string): Promise<GoogleUserResult> {
     try {
       const res = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${access_token}`)
       return res.data
@@ -159,7 +106,9 @@ class User {
     })
   }
 
-  getUserByEmail(email: string): Promise<User | null> {
+  abstract saveInDB(): Promise<void>
+
+  static getUserByEmail(email: string): Promise<IFullUserData> {
     return new Promise(async (resolve, reject) => {
       const prisma = new PrismaClient()
       try {
@@ -168,25 +117,39 @@ class User {
             googleEmail: email
           }
         })
-        await prisma.$disconnect()
+
+        if (!user) {
+          throw new Error("❌ User not found")
+        }
 
         resolve({
-          googleEmail: user?.googleEmail,
-          googleName: user?.googleName,
-          googlePicture: user?.googlePicture,
-          role: user?.role,
-          group: user?.groupRef || "",
-          name: user?.lecturerRef || "",
-          refreshToken: user?.refreshToken
-        } as User | null)
+          googleEmail: user.googleEmail,
+          googleName: user.googleName,
+          googlePicture: user.googlePicture,
+          role: user.role as TRole,
+          refreshToken: user.refreshToken,
+          group: user.groupRef || "",
+          name: user.lecturerRef || ""
+        })
       } catch (error: any) {
         console.error(error, "❌ Failed to get user by email")
         reject(new Error("❌ Failed to get user by email"))
+      } finally {
+        prisma.$disconnect()
       }
     })
   }
+}
 
-  async getStudents() {
+class Student extends User {
+  group: string
+
+  constructor({ googleEmail, googleName, googlePicture, refreshToken, group }: { googleEmail: string; googleName: string; googlePicture: string; refreshToken: string; group: string }) {
+    super({ googleEmail, googleName, googlePicture, role: "student", refreshToken })
+    this.group = group
+  }
+
+  static async getStudents() {
     return new Promise(async (resolve, reject) => {
       const prisma = new PrismaClient()
       prisma.user
@@ -210,7 +173,51 @@ class User {
     })
   }
 
-  async getLecturers() {
+  async saveInDB() {
+    const prisma = new PrismaClient()
+    try {
+      // check if user exists
+      const user = await prisma.user.findUnique({
+        where: {
+          googleEmail: this.googleEmail
+        }
+      })
+
+      // if user exists, throw error
+      if (user) {
+        throw new Error("❌ User already exists")
+      }
+
+      // create user
+      await prisma.user.create({
+        data: {
+          googleEmail: this.googleEmail,
+          googleName: this.googleName,
+          googlePicture: this.googlePicture,
+          refreshToken: this.refreshToken,
+          role: this.role,
+          groupRef: this.group,
+          lecturerRef: null
+        }
+      })
+    } catch (error: any) {
+      console.error(error, "❌ Failed to create user")
+      throw new Error("❌ Failed to create user")
+    } finally {
+      await prisma.$disconnect()
+    }
+  }
+}
+
+class Lecturer extends User {
+  name: string
+
+  constructor({ googleEmail, googleName, googlePicture, refreshToken, name }: { googleEmail: string; googleName: string; googlePicture: string; refreshToken: string; name: string }) {
+    super({ googleEmail, googleName, googlePicture, role: "lecturer", refreshToken })
+    this.name = name
+  }
+
+  static async getLecturers() {
     return new Promise(async (resolve, reject) => {
       const prisma = new PrismaClient()
       prisma.user
@@ -233,6 +240,41 @@ class User {
         })
     })
   }
+
+  async saveInDB() {
+    const prisma = new PrismaClient()
+    try {
+      // check if user exists
+      const user = await prisma.user.findUnique({
+        where: {
+          googleEmail: this.googleEmail
+        }
+      })
+
+      // if user exists, throw error
+      if (user) {
+        throw new Error("❌ User already exists")
+      }
+
+      // create user
+      await prisma.user.create({
+        data: {
+          googleEmail: this.googleEmail,
+          googleName: this.googleName,
+          googlePicture: this.googlePicture,
+          refreshToken: this.refreshToken,
+          role: this.role,
+          groupRef: null,
+          lecturerRef: this.name
+        }
+      })
+    } catch (error: any) {
+      console.error(error, "❌ Failed to create user")
+      throw new Error("❌ Failed to create user")
+    } finally {
+      await prisma.$disconnect()
+    }
+  }
 }
 
-export default User
+export { Student, Lecturer, User }

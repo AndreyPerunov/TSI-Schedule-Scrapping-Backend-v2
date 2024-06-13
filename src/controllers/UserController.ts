@@ -1,7 +1,8 @@
-import User from "../models/User"
+import { Student, Lecturer, User } from "../models/User"
 import { Request, Response } from "express"
 import { google } from "googleapis"
 import jwt from "jsonwebtoken"
+import { IFullUserData } from "../types"
 
 class UserController {
   scopes = ["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/calendar"]
@@ -48,7 +49,7 @@ class UserController {
 
       // get user info from Google
       console.log("🔑 Fetching Google User")
-      const googleUser = await new User().getGoogleUser(access_token as string)
+      const googleUser = await User.getGoogleUser(access_token as string)
       console.log("🔑", { googleUser })
 
       // check if email is verified
@@ -58,12 +59,12 @@ class UserController {
         return res.redirect(`${process.env.CLIENT_URL}/login/error?error_message=Email is not verified. Please verify your email.`)
       }
 
-      let user: User | null = null
+      let user: IFullUserData | null = null
 
       if (state.from == "login") {
         console.log("🔑 LOGIN")
         console.log("🔑 Checking if User Exists")
-        user = await new User().getUserByEmail(googleUser.email as string)
+        user = await User.getUserByEmail(googleUser.email)
         if (user?.googleEmail && user?.googleName && user?.googlePicture && user?.refreshToken && user?.role && (user?.group || user?.name)) {
           console.log("🔑 User Exists")
         } else {
@@ -74,31 +75,52 @@ class UserController {
         console.log("🔑 SIGNUP")
         // create user
         console.log("🔑 Creating User")
-        user = new User({
-          googleEmail: googleUser.email as string,
-          googleName: googleUser.name as string,
-          googlePicture: googleUser.picture as string,
-          refreshToken: refresh_token as string,
-          role: state.role,
-          group: state.group,
-          name: state.name
-        })
-        await user.create()
-      }
-
-      const userData = {
-        googleEmail: user.googleEmail,
-        googleName: user.googleName,
-        googlePicture: user.googlePicture,
-        role: user.role,
-        group: user.group,
-        name: user.name
+        if (state.role == "student") {
+          const student = new Student({
+            googleEmail: googleUser.email as string,
+            googleName: googleUser.name as string,
+            googlePicture: googleUser.picture as string,
+            refreshToken: refresh_token as string,
+            group: state.group
+          })
+          await student.saveInDB()
+          user = {
+            googleEmail: student.googleEmail,
+            googleName: student.googleName,
+            googlePicture: student.googlePicture,
+            role: student.role,
+            refreshToken: student.refreshToken,
+            group: student.group,
+            name: ""
+          }
+        } else if (state.role == "lecturer") {
+          const lecturer = new Lecturer({
+            googleEmail: googleUser.email as string,
+            googleName: googleUser.name as string,
+            googlePicture: googleUser.picture as string,
+            refreshToken: refresh_token as string,
+            name: state.name
+          })
+          await lecturer.saveInDB()
+          user = {
+            googleEmail: lecturer.googleEmail,
+            googleName: lecturer.googleName,
+            googlePicture: lecturer.googlePicture,
+            role: lecturer.role,
+            refreshToken: lecturer.refreshToken,
+            group: "",
+            name: lecturer.name
+          }
+        } else {
+          console.log("❌ Invalid Role")
+          return res.redirect(`${process.env.CLIENT_URL}/login/error?error_message=Invalid role. Please try again.`)
+        }
       }
 
       // session cookie
       console.log("🔑 Setting Session Cookie")
       const expires = new Date(Date.now() + 90 * 60 * 1000) // 90 minutes
-      const session = jwt.sign(userData, process.env.JWT_SECRET as string, { expiresIn: "90min" })
+      const session = jwt.sign(user, process.env.JWT_SECRET as string, { expiresIn: "90min" })
       res.cookie("session", session, {
         expires,
         httpOnly: true
@@ -141,9 +163,7 @@ class UserController {
   }
 
   getStudents(req: any, res: Response) {
-    const user = new User()
-    user
-      .getStudents()
+    Student.getStudents()
       .then(students => {
         res.json(students)
       })
@@ -153,9 +173,7 @@ class UserController {
   }
 
   getLecturers(req: any, res: Response) {
-    const user = new User()
-    user
-      .getLecturers()
+    Lecturer.getLecturers()
       .then(lecturers => {
         res.json(lecturers)
       })

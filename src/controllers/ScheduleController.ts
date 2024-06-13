@@ -1,6 +1,6 @@
 import Schedule from "../models/Schedule"
 import { Request, Response } from "express"
-import User from "../models/User"
+import { Lecturer, Student } from "../models/User"
 
 class ScheduleController {
   getSchedule(req: Request, res: Response) {
@@ -29,7 +29,28 @@ class ScheduleController {
       const { lectures, days, calendar_name } = req.body
 
       // user data is got from MustBeLoggedIn middleware
-      const access_token = await new User({ googleEmail: req.user.googleEmail }).getAccessToken()
+      let access_token: string
+      if (req.user.role === "lecturer") {
+        const user = new Lecturer({
+          googleEmail: req.user.googleEmail,
+          googleName: req.user.googleName,
+          googlePicture: req.user.googlePicture,
+          refreshToken: req.user.refreshToken,
+          name: req.user.name
+        })
+        access_token = await user.getAccessToken()
+      } else if (req.user.role === "student") {
+        const user = new Student({
+          googleEmail: req.user.googleEmail,
+          googleName: req.user.googleName,
+          googlePicture: req.user.googlePicture,
+          refreshToken: req.user.refreshToken,
+          group: req.user.group
+        })
+        access_token = await user.getAccessToken()
+      } else {
+        throw new Error("❌ User role is not valid")
+      }
 
       await schedule.createCalendar({ access_token, lectures, days, calendar_name })
       res.json({ message: "Calendar created successfully" })

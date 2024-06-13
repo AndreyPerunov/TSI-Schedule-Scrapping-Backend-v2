@@ -14,4 +14,14 @@ type Lecture = {
   typeOfTheClass: string
   comment: string
 }
-export { ScrapedLecture, ScrapedStudyDay, DayOfTheWeek, Month, ScrapedDate, Lecture }
+type TRole = "student" | "lecturer"
+interface IFullUserData {
+  googleEmail: string
+  googleName: string
+  googlePicture: string
+  role: TRole
+  refreshToken: string
+  group: string
+  name: string
+}
+export { ScrapedLecture, ScrapedStudyDay, DayOfTheWeek, Month, ScrapedDate, Lecture, TRole, IFullUserData }
