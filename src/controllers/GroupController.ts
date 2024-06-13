@@ -1,11 +1,10 @@
 import Group from "../models/Group"
 import { Request, Response } from "express"
+import ScraperService from "../services/ScraperService"
 
 class GroupController {
   getGroups(req: Request, res: Response) {
-    const group = new Group()
-    group
-      .getGroups()
+    Group.getGroups()
       .then(groups => {
         res.json(groups)
       })
@@ -15,11 +14,14 @@ class GroupController {
   }
 
   scrapeGroups(req: Request, res: Response) {
-    const group = new Group()
-    group
-      .scrapeGroups()
-      .then(groups => {
-        res.json(groups)
+    ScraperService.getGroups()
+      .then(async groups => {
+        try {
+          await Group.saveGroups(groups)
+          res.status(200).json("Groups saved in DB")
+        } catch (err) {
+          res.status(500).json(err)
+        }
       })
       .catch(err => {
         res.status(500).json(err)
@@ -27,9 +29,7 @@ class GroupController {
   }
 
   getActiveGroups(req: Request, res: Response) {
-    const group = new Group()
-    group
-      .getActiveGroups()
+    Group.getActiveGroups()
       .then(groups => {
         res.json(groups)
       })

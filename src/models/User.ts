@@ -185,7 +185,7 @@ class Student extends User {
 
       // if user exists, throw error
       if (user) {
-        throw new Error("❌ User already exists")
+        throw new Error(`❌ ${this.googleEmail} user already exists`)
       }
 
       // create user

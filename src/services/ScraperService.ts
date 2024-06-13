@@ -146,7 +146,7 @@ class ScraperService {
     })
   }
 
-  getGroups() {
+  getGroups(): Promise<string[]> {
     return new Promise(async (resolve, reject) => {
       // Launch the browser
       process.stdout.write("⛏️ Launching Browser")
@@ -191,10 +191,6 @@ class ScraperService {
         }, select)
         groups.shift()
         console.log("✅")
-
-        // Save result to DB
-        console.log("⛏️ Saving Groups to DB")
-        await DatabaseService.saveGroups(groups)
 
         // Send Result
         console.log("⛏️ Groups Scraped Successfully✅")

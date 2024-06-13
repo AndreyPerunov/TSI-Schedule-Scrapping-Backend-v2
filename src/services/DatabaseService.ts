@@ -51,25 +51,6 @@ class DatabaseService {
     })
   }
 
-  saveGroups(groups: string[]) {
-    return new Promise(async (resolve, reject) => {
-      const prisma = new PrismaClient()
-
-      try {
-        for (const group of groups) {
-          // Check if group already exists. If not, create it
-          await prisma.group.upsert({ where: { groupName: group }, update: { groupName: group }, create: { groupName: group } })
-          console.log(`💾 Updated group ${group}`)
-        }
-        resolve(void 0)
-      } catch (error) {
-        reject(error)
-      } finally {
-        prisma.$disconnect()
-      }
-    })
-  }
-
   saveLecturers(lecturers: string[]) {
     return new Promise(async (resolve, reject) => {
       const prisma = new PrismaClient()
