@@ -1,11 +1,10 @@
 import { launch, executablePath as _executablePath, Page } from "puppeteer"
 import { Lecture, ScrapedStudyDay, ScrapedDate } from "../types"
-import DatabaseService from "../services/DatabaseService"
 
 require("dotenv").config()
 
 class ScraperService {
-  getSchedule({ group, lecturer, room, days = 30 }: { group?: string; lecturer?: string; room?: string; days?: number }) {
+  getSchedule({ group, lecturer, room, days = 30 }: { group?: string; lecturer?: string; room?: string; days?: number }): Promise<Lecture[]> {
     return new Promise(async (resolve, reject) => {
       console.log(`⛏️ Getting Schedule for Days: ${days}` + (group ? `, Group: ${group}` : "") + (lecturer ? `, Lecturer: ${lecturer}` : "") + (room ? `, Room: ${room}` : "") + "🗓️")
 
@@ -122,13 +121,6 @@ class ScraperService {
           await Promise.all([page.click('button[name="next"]'), page.waitForNavigation()])
           // await Promise.all([page.click('button[name="prev"]'), page.waitForNavigation()])
           console.log("✅")
-        }
-
-        // Save result to DB
-        const onlyOneFilterIsSelected = (group && !lecturer && !room) || (!group && lecturer && !room) || (!group && !lecturer && room)
-        if (onlyOneFilterIsSelected && days === 30) {
-          console.log("⛏️ Saving Lectures to DB...")
-          await DatabaseService.saveLectures({ lectures: result, group, lecturer, room })
         }
 
         // Send Result

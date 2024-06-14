@@ -1,4 +1,5 @@
 import Schedule from "../models/Schedule"
+import ScraperService from "../services/ScraperService"
 import { Request, Response } from "express"
 import { Lecturer, Student } from "../models/User"
 
@@ -9,22 +10,56 @@ class ScheduleController {
     const room: string | undefined = req.query.room as string | undefined
     const days: number | undefined = parseInt(req.query.days as string) || undefined
 
-    const schedule = new Schedule()
+    if (!group && !lecturer && !room) {
+      return res.status(400).json("You must provide at least one of the following: group, lecturer, room")
+    }
 
-    schedule
-      .getSchedule({ group, lecturer, room, days })
-      .then(schedule => {
-        res.json(schedule)
-      })
-      .catch(err => {
-        res.status(500).json(err)
-      })
+    if (days && days < 180 && days > 1) {
+      return res.status(400).json("Days must be a number between 1 and 180")
+    }
+
+    const filters = { group, lecturer, room, days } as
+      | {
+          group: string
+          lecturer?: string
+          room?: string
+          days: number
+        }
+      | {
+          group?: string
+          lecturer: string
+          room?: string
+          days: number
+        }
+      | {
+          group?: string
+          lecturer?: string
+          room: string
+          days: number
+        }
+
+    const schedule = new Schedule(filters)
+
+    schedule.isScrapedToday().then(async isScrapedToday => {
+      if (isScrapedToday) {
+        console.log("📅 Schedule already scraped today, getting it from DB")
+        const data = await schedule.getSchedule()
+        return res.json(data)
+      } else {
+        console.log("📅 Schedule not scraped today, scraping it from the website")
+        const lectures = await ScraperService.getSchedule(filters)
+        const onlyOneFilterIsSelected = (group && !lecturer && !room) || (!group && lecturer && !room) || (!group && !lecturer && room)
+        if (onlyOneFilterIsSelected && days === 30) {
+          console.log("⛏️ Saving Lectures to DB...")
+          await schedule.saveLecturesInDb(lectures)
+        }
+        return res.json(lectures)
+      }
+    })
   }
 
   async createCalendar(req: any, res: Response) {
     try {
-      const schedule = new Schedule()
-
       // get lectures, days, and calendar_name from the request body
       const { lectures, days, calendar_name } = req.body
 
@@ -52,7 +87,7 @@ class ScheduleController {
         throw new Error("❌ User role is not valid")
       }
 
-      await schedule.createCalendar({ access_token, lectures, days, calendar_name })
+      await Schedule.createCalendar({ access_token, lectures, days, calendar_name })
       res.json({ message: "Calendar created successfully" })
     } catch (error) {
       console.log("❌ Error creating calendar", error)
@@ -61,9 +96,8 @@ class ScheduleController {
   }
 
   async getLastScrapeTimeStamp(req: Request, res: Response) {
-    const schedule = new Schedule()
     try {
-      const timestamp = await schedule.getLastScrapeTimeStamp()
+      const timestamp = await Schedule.getLastScrapeTimeStamp()
       res.json({ timestamp })
     } catch (error) {
       console.log("❌ Error getting last scrape timestamp", error)

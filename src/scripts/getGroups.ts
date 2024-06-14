@@ -1,5 +1,5 @@
 import Group from "../models/Group"
-import ScraperService from "services/ScraperService"
+import ScraperService from "../services/ScraperService"
 
 ScraperService.getGroups()
   .then(async groups => {

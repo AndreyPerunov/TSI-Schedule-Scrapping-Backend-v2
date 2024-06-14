@@ -1,6 +1,6 @@
-import ScraperService from "../services/ScraperService"
 import { google } from "googleapis"
 import { PrismaClient } from "@prisma/client"
+import { Lecture } from "../types"
 
 type lectureEvent = {
   title: string
@@ -12,70 +12,153 @@ type lectureEvent = {
 }
 
 class Schedule {
-  getSchedule({ group, lecturer, room, days = 30 }: { group?: string; lecturer?: string; room?: string; days?: number }) {
+  filters:
+    | {
+        group: string
+        lecturer?: string
+        room?: string
+        days: number
+      }
+    | {
+        group?: string
+        lecturer: string
+        room?: string
+        days: number
+      }
+    | {
+        group?: string
+        lecturer?: string
+        room: string
+        days: number
+      }
+
+  constructor(
+    filters:
+      | {
+          group: string
+          lecturer?: string
+          room?: string
+          days?: number
+        }
+      | {
+          group?: string
+          lecturer: string
+          room?: string
+          days?: number
+        }
+      | {
+          group?: string
+          lecturer?: string
+          room: string
+          days?: number
+        }
+  ) {
+    this.filters = { ...filters, days: filters.days || 30 }
+  }
+
+  getSchedule() {
     console.log("📅 Getting schedule")
     return new Promise(async (resolve, reject) => {
       const prisma = new PrismaClient()
       try {
-        // checking if there was a scrape today
-        const isScrapedToday = await this.#isScrapedToday(group, lecturer, room, days)
-        if (!isScrapedToday) {
-          console.log("📅 Schedule not scraped, scraping schedule")
-          const schedule = await ScraperService.getSchedule({ group, lecturer, room, days })
+        // case when scraped for group
+        if (this.filters.group && !this.filters.lecturer && !this.filters.room) {
+          const schedule = await prisma.lecture.findMany({
+            where: {
+              group: {
+                groupName: this.filters.group
+              }
+            }
+          })
+          await prisma.$disconnect()
           resolve(schedule)
           return
-        } else {
-          console.log("📅 Schedule already scraped today, getting it from DB")
-          // case when scraped for group
-          if (group && !lecturer && !room) {
-            const schedule = await prisma.lecture.findMany({
-              where: {
-                group: {
-                  groupName: group
-                }
-              }
-            })
-            await prisma.$disconnect()
-            resolve(schedule)
-            return
-          }
+        }
 
-          // case when scraped for lecturer
-          if (!group && lecturer && !room) {
-            const schedule = await prisma.lecture.findMany({
-              where: {
-                lecturer: {
-                  lecturerName: lecturer
-                }
+        // case when scraped for lecturer
+        if (!this.filters.group && this.filters.lecturer && !this.filters.room) {
+          const schedule = await prisma.lecture.findMany({
+            where: {
+              lecturer: {
+                lecturerName: this.filters.lecturer
               }
-            })
-            await prisma.$disconnect()
-            resolve(schedule)
-            return
-          }
+            }
+          })
+          await prisma.$disconnect()
+          resolve(schedule)
+          return
+        }
 
-          // case when scraped for room
-          if (!group && !lecturer && room) {
-            const schedule = await prisma.lecture.findMany({
-              where: {
-                room: {
-                  roomNumber: room
-                }
+        // case when scraped for room
+        if (!this.filters.group && !this.filters.lecturer && this.filters.room) {
+          const schedule = await prisma.lecture.findMany({
+            where: {
+              room: {
+                roomNumber: this.filters.room
               }
-            })
-            await prisma.$disconnect()
-            resolve(schedule)
-            return
-          }
+            }
+          })
+          await prisma.$disconnect()
+          resolve(schedule)
+          return
         }
       } catch (error) {
         console.error(error, "❌ Failed to get schedule")
         reject(new Error("❌ Failed to get schedule"))
       }
     })
-    // return ScraperService.getSchedule({ group, lecturer, room, days })
   }
-  createCalendar({ access_token, lectures, days, calendar_name }: { access_token: string; lectures: lectureEvent[]; days: number; calendar_name: string }): Promise<{ message: string } | { message: string; error: any }> {
+
+  saveLecturesInDb(lectures: Lecture[]) {
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+
+      try {
+        // Delete all lectures, update scrapeTimeStamp, upsert groups, lecturers and rooms
+        if (this.filters.group && !this.filters.lecturer && !this.filters.room) {
+          await prisma.lecture.deleteMany({ where: { groupRef: this.filters.group } })
+          await prisma.group.upsert({ where: { groupName: this.filters.group }, update: { scrapeTimeStamp: new Date() }, create: { groupName: this.filters.group, scrapeTimeStamp: new Date() } })
+        }
+        if (!this.filters.group && this.filters.lecturer && !this.filters.room) {
+          await prisma.lecture.deleteMany({ where: { lecturerRef: this.filters.lecturer } })
+          await prisma.lecturer.upsert({ where: { lecturerName: this.filters.lecturer }, update: { scrapeTimeStamp: new Date() }, create: { lecturerName: this.filters.lecturer, scrapeTimeStamp: new Date() } })
+        }
+        if (!this.filters.group && !this.filters.lecturer && this.filters.room) {
+          await prisma.lecture.deleteMany({ where: { roomRef: this.filters.room } })
+          await prisma.room.upsert({ where: { roomNumber: this.filters.room }, update: { scrapeTimeStamp: new Date() }, create: { roomNumber: this.filters.room, scrapeTimeStamp: new Date() } })
+        }
+
+        // Creating new lectures
+        for (const lecture of lectures) {
+          const createdLecture = await prisma.lecture.create({
+            data: {
+              groupRef: this.filters.group || null,
+              lecturerRef: this.filters.lecturer || null,
+              roomRef: this.filters.room || null,
+              groups: lecture.groups,
+              lecturerName: lecture.lecturer,
+              roomNumber: lecture.room,
+              lectureNumber: lecture.lectureNumber,
+              subject: lecture.subject,
+              typeOfTheClass: lecture.typeOfTheClass,
+              comment: lecture.comment,
+              start: lecture.start,
+              end: lecture.end
+            }
+          })
+          console.log(`💾 Created new lecture ${createdLecture.subject} at ${createdLecture.start}`)
+        }
+
+        resolve(void 0)
+      } catch (error) {
+        reject(error)
+      } finally {
+        prisma.$disconnect()
+      }
+    })
+  }
+
+  static createCalendar({ access_token, lectures, days, calendar_name }: { access_token: string; lectures: lectureEvent[]; days: number; calendar_name: string }): Promise<{ message: string } | { message: string; error: any }> {
     return new Promise(async (resolve, reject) => {
       try {
         const oAuth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID as string, process.env.GOOGLE_CLIENT_SECRET as string, process.env.GOOGLE_REDIRECT_URL as string)
@@ -146,19 +229,19 @@ class Schedule {
     })
   }
 
-  #isScrapedToday(group?: string, lecturer?: string, room?: string, days?: number) {
-    console.log("📅 Checking if scraped today", { group, lecturer, room, days })
+  isScrapedToday() {
+    console.log("📅 Checking if scraped today", { ...this.filters })
     return new Promise(async (resolve, reject) => {
       const prisma = new PrismaClient()
       try {
         // checking if there was a scrape for group today
-        if (days == 30 && group && !lecturer && !room) {
+        if (this.filters.days == 30 && this.filters.group && !this.filters.lecturer && !this.filters.room) {
           console.log("📅 Checking GROUP")
           // Getting group from database
           console.log("Getting group from database")
           const groupObj = await prisma.group.findUnique({
             where: {
-              groupName: group
+              groupName: this.filters.group
             }
           })
           await prisma.$disconnect()
@@ -187,13 +270,13 @@ class Schedule {
         }
 
         // checking if there was a scrape for lecturer today
-        if (days == 30 && !group && lecturer && !room) {
+        if (this.filters.days == 30 && !this.filters.group && this.filters.lecturer && !this.filters.room) {
           console.log("📅 Checking LECTURER")
           console.log("Getting lecturer from database")
           // Getting lecturer from database
           const lecturerObj = await prisma.lecturer.findUnique({
             where: {
-              lecturerName: lecturer
+              lecturerName: this.filters.lecturer
             }
           })
           await prisma.$disconnect()
@@ -223,13 +306,13 @@ class Schedule {
         }
 
         // checking if there was a scrape for room today
-        if (days == 30 && !group && !lecturer && room) {
+        if (this.filters.days == 30 && !this.filters.group && !this.filters.lecturer && this.filters.room) {
           console.log("📅 Checking ROOM")
           console.log("Getting room from database")
           // Getting room from database
           const roomObj = await prisma.room.findUnique({
             where: {
-              roomNumber: room
+              roomNumber: this.filters.room
             }
           })
           await prisma.$disconnect()
@@ -257,7 +340,7 @@ class Schedule {
           }
         }
 
-        console.log("⚠️ No scrape today", { group, lecturer, room, days })
+        console.log("⚠️ No scrape today", { ...this.filters })
         resolve(false)
       } catch (error) {
         console.error(error, "❌ Failed to get schedule")
@@ -266,7 +349,7 @@ class Schedule {
     })
   }
 
-  async getLastScrapeTimeStamp() {
+  static async getLastScrapeTimeStamp() {
     console.log("📅 Getting last scrape time stamp")
     return new Promise(async (resolve, reject) => {
       const prisma = new PrismaClient()
