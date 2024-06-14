@@ -27,6 +27,7 @@ class UserController {
 
       // get state from query string
       console.log("🔑 Getting state from query string")
+      console.log("🔑", { query_state: req.query.state })
       const state = JSON.parse(decodeURIComponent(req.query.state as string))
       console.log("🔑", { state })
 
