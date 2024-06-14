@@ -50,25 +50,6 @@ class DatabaseService {
       }
     })
   }
-
-  saveRooms(rooms: string[]) {
-    return new Promise(async (resolve, reject) => {
-      const prisma = new PrismaClient()
-
-      try {
-        for (const room of rooms) {
-          // Check if room already exists. If not, create it
-          await prisma.room.upsert({ where: { roomNumber: room }, update: { roomNumber: room }, create: { roomNumber: room } })
-          console.log(`💾 Updated room ${room}`)
-        }
-        resolve(void 0)
-      } catch (error) {
-        reject(error)
-      } finally {
-        prisma.$disconnect()
-      }
-    })
-  }
 }
 
 export default new DatabaseService()

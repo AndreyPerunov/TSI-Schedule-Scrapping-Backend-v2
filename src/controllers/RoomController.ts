@@ -1,11 +1,10 @@
 import Room from "../models/Room"
+import ScraperService from "../services/ScraperService"
 import { Request, Response } from "express"
 
 class RoomController {
   getRooms(req: Request, res: Response) {
-    const room = new Room()
-    room
-      .getRooms()
+    Room.getRooms()
       .then(rooms => {
         res.json(rooms)
       })
@@ -14,11 +13,14 @@ class RoomController {
       })
   }
   scrapeRooms(req: Request, res: Response) {
-    const room = new Room()
-    room
-      .scrapeRooms()
-      .then(rooms => {
-        res.json(rooms)
+    ScraperService.getRooms()
+      .then(async rooms => {
+        try {
+          await Room.saveRooms(rooms)
+          res.status(200).json("Rooms saved in DB")
+        } catch (err) {
+          res.status(500).json(err)
+        }
       })
       .catch(err => {
         res.status(500).json(err)

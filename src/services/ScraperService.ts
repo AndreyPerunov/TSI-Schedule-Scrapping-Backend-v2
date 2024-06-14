@@ -268,7 +268,7 @@ class ScraperService {
     })
   }
 
-  getRooms() {
+  getRooms(): Promise<string[]> {
     return new Promise(async (resolve, reject) => {
       // Launch the browser
       process.stdout.write("⛏️ Launching Browser")
@@ -313,10 +313,6 @@ class ScraperService {
         }, select)
         rooms.shift()
         console.log("✅")
-
-        // Save result to DB
-        console.log("⛏️ Saving Rooms to DB")
-        await DatabaseService.saveRooms(rooms)
 
         // Send Result
         console.log("⛏️ Rooms Scraped Successfully✅")

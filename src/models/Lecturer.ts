@@ -76,7 +76,7 @@ class Lecturer {
         })
       }
 
-      if (newLecturerName) {
+      if (newLecturerName && !newScrapeTimeStamp) {
         await prisma.lecturer.update({
           where: {
             lecturerName: this.lecturerName
@@ -87,7 +87,7 @@ class Lecturer {
         })
       }
 
-      if (newScrapeTimeStamp) {
+      if (newScrapeTimeStamp && !newLecturerName) {
         await prisma.lecturer.update({
           where: {
             lecturerName: this.lecturerName

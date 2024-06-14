@@ -76,7 +76,7 @@ class Group {
         })
       }
 
-      if (newGroupName) {
+      if (newGroupName && !newScrapeTimeStamp) {
         // update group name
         await prisma.group.update({
           where: {
@@ -88,7 +88,7 @@ class Group {
         })
       }
 
-      if (newScrapeTimeStamp) {
+      if (newScrapeTimeStamp && !newGroupName) {
         // update group time stamp
         await prisma.group.update({
           where: {
