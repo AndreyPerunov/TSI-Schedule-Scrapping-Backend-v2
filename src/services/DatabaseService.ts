@@ -51,25 +51,6 @@ class DatabaseService {
     })
   }
 
-  saveLecturers(lecturers: string[]) {
-    return new Promise(async (resolve, reject) => {
-      const prisma = new PrismaClient()
-
-      try {
-        for (const lecturer of lecturers) {
-          // Check if lecturer already exists. If not, create it
-          await prisma.lecturer.upsert({ where: { lecturerName: lecturer }, update: { lecturerName: lecturer }, create: { lecturerName: lecturer } })
-          console.log(`💾 Updated lecturer ${lecturer}`)
-        }
-        resolve(void 0)
-      } catch (error) {
-        reject(error)
-      } finally {
-        prisma.$disconnect()
-      }
-    })
-  }
-
   saveRooms(rooms: string[]) {
     return new Promise(async (resolve, reject) => {
       const prisma = new PrismaClient()

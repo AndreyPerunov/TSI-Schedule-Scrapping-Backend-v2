@@ -207,7 +207,7 @@ class ScraperService {
     })
   }
 
-  getLecturers() {
+  getLecturers(): Promise<string[]> {
     return new Promise(async (resolve, reject) => {
       // Launch the browser
       process.stdout.write("⛏️ Launching Browser")
@@ -252,10 +252,6 @@ class ScraperService {
         }, select)
         lecturers.shift()
         console.log("✅")
-
-        // Save result to DB
-        console.log("⛏️ Saving Lecturers to DB")
-        await DatabaseService.saveLecturers(lecturers)
 
         // Send Result
         console.log("⛏️ Lecturers Scraped Successfully✅")

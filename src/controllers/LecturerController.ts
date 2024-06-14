@@ -1,11 +1,10 @@
 import Lecturer from "../models/Lecturer"
+import ScraperService from "../services/ScraperService"
 import { Request, Response } from "express"
 
 class LecturerController {
   getLecturers(req: Request, res: Response) {
-    const lecturer = new Lecturer()
-    lecturer
-      .getLecturers()
+    Lecturer.getLecturers()
       .then(lecturers => {
         res.json(lecturers)
       })
@@ -14,11 +13,14 @@ class LecturerController {
       })
   }
   scrapeLecturers(req: Request, res: Response) {
-    const lecturer = new Lecturer()
-    lecturer
-      .scrapeLecturers()
-      .then(lecturers => {
-        res.json(lecturers)
+    ScraperService.getLecturers()
+      .then(async lecturers => {
+        try {
+          await Lecturer.saveLecturers(lecturers)
+          res.status(200).json("Lecturers saved in DB")
+        } catch (err) {
+          res.status(500).json(err)
+        }
       })
       .catch(err => {
         res.status(500).json(err)

@@ -119,8 +119,8 @@ class Group {
 
       return Boolean(group)
     } catch (error: any) {
-      console.error(error, "❌ Failed to create group")
-      throw new Error("❌ Failed to create group")
+      console.error(error, "❌ Failed to find group")
+      throw new Error("❌ Failed to find group")
     } finally {
       await prisma.$disconnect()
     }
