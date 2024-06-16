@@ -334,8 +334,8 @@ class ScraperService {
       .map(lecture => {
         const [lectureNumber, time, room, group, lecturer, subject, typeOfTheClass, comment] = lecture
         const [startTime, endTime] = time.split(" - ")
-        const start = new Date(`${month} ${day}, ${year} ${startTime}`).toISOString()
-        const end = new Date(`${month} ${day}, ${year} ${endTime}`).toISOString()
+        const start = new Date(`${month} ${day}, ${year} ${startTime} Z`).toISOString()
+        const end = new Date(`${month} ${day}, ${year} ${endTime} Z`).toISOString()
 
         return {
           lectureNumber: parseInt(lectureNumber),
