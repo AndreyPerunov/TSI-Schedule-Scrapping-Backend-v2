@@ -130,6 +130,7 @@ class Schedule {
 
         // Creating new lectures
         for (const lecture of lectures) {
+          console.log(`🌱 Created new lecture ${lecture.subject} at ${lecture.start}`)
           const createdLecture = await prisma.lecture.create({
             data: {
               groupRef: this.filters.group || null,
