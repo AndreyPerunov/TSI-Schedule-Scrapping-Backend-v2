@@ -11,10 +11,12 @@ class ScheduleController {
     const days: number | undefined = parseInt(req.query.days as string) || undefined
 
     if (!group && !lecturer && !room) {
+      console.log("❌ You must provide at least one of the following: group, lecturer, room. Your data: ", { group, lecturer, room, days })
       return res.status(400).json("You must provide at least one of the following: group, lecturer, room")
     }
 
-    if (days && days < 180 && days > 1) {
+    if (!days || (days > 180 && days < 1)) {
+      console.log("❌ Days must be a number between 1 and 180. Your data: ", { group, lecturer, room, days })
       return res.status(400).json("Days must be a number between 1 and 180")
     }
 

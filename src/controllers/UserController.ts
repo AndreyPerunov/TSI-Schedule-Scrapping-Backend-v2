@@ -128,9 +128,7 @@ class UserController {
 
       res.cookie("session", session, {
         expires,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production" ? true : false,
-        sameSite: "none"
+        httpOnly: true
       })
 
       // redirect to client with token
