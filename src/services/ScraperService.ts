@@ -1,5 +1,6 @@
 import { launch, executablePath as _executablePath, Page } from "puppeteer"
 import { Lecture, ScrapedStudyDay, ScrapedDate } from "../types"
+import { DateTime, Info } from "luxon"
 
 require("dotenv").config()
 
@@ -334,8 +335,34 @@ class ScraperService {
       .map(lecture => {
         const [lectureNumber, time, room, group, lecturer, subject, typeOfTheClass, comment] = lecture
         const [startTime, endTime] = time.split(" - ")
-        const start = new Date(`${month} ${day}, ${year} ${startTime} Z`).toISOString()
-        const end = new Date(`${month} ${day}, ${year} ${endTime} Z`).toISOString()
+        const start = DateTime.fromObject(
+          {
+            year: year,
+            month: Info.months().indexOf(month) + 1,
+            day: day,
+            hour: Number(startTime.split(":")[0]),
+            minute: Number(startTime.split(":")[1])
+          },
+          { zone: "Europe/Riga" }
+        )
+          .toUTC()
+          .toISO()
+        const end = DateTime.fromObject(
+          {
+            year: year,
+            month: Info.months().indexOf(month) + 1,
+            day: day,
+            hour: Number(endTime.split(":")[0]),
+            minute: Number(endTime.split(":")[1])
+          },
+          { zone: "Europe/Riga" }
+        )
+          .toUTC()
+          .toISO()
+
+        if (!start || !end) {
+          throw new Error("Failed to format date")
+        }
 
         return {
           lectureNumber: parseInt(lectureNumber),
