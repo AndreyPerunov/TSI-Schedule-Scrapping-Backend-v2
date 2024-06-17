@@ -169,6 +169,19 @@ class UserController {
     return res.json("Logged out")
   }
 
+  deleteUser(req: any, res: Response) {
+    // req.user is set in mustBeLoggedIn middleware
+    console.log("🔑 Deleting User")
+    User.removeUserByEmail(req.user.googleEmail)
+      .then(() => {
+        res.clearCookie("session")
+        return res.json("Deleted user")
+      })
+      .catch(err => {
+        return res.status(500).json(err)
+      })
+  }
+
   getStudents(req: any, res: Response) {
     Student.getStudents()
       .then(students => {

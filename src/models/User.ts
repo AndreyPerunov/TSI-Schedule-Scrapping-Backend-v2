@@ -108,6 +108,25 @@ abstract class User {
 
   abstract saveInDB(): Promise<void>
 
+  static removeUserByEmail(email: string): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+      try {
+        await prisma.user.delete({
+          where: {
+            googleEmail: email
+          }
+        })
+        resolve()
+      } catch (error: any) {
+        console.error(error, "❌ Failed to remove user by email")
+        reject(new Error("❌ Failed to remove user by email"))
+      } finally {
+        prisma.$disconnect()
+      }
+    })
+  }
+
   static getUserByEmail(email: string): Promise<IFullUserData> {
     return new Promise(async (resolve, reject) => {
       const prisma = new PrismaClient()
