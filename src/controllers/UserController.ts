@@ -182,6 +182,27 @@ class UserController {
       })
   }
 
+  updateUser(req: any, res: Response) {
+    // req.user is set in mustBeLoggedIn middleware
+    const user = req.user
+    const { name, group, role } = req.body
+
+    if (!role) return res.status(400).json("Role is required")
+    if (!group && !name) return res.status(400).json("Name or group is required")
+
+    console.log("Updating User")
+    console.log("From: ", { email: user.googleEmail, name: user.name, group: user.group, role: user.role })
+    console.log("To: ", { email: user.googleEmail, name, group, role })
+    User.updateUserByEmail(user.googleEmail, { name, group, role })
+      .then(() => {
+        return res.status(200).json("Updated user")
+      })
+      .catch(err => {
+        console.log("❌ Failed to update user", err)
+        return res.status(500).json(err)
+      })
+  }
+
   getStudents(req: any, res: Response) {
     Student.getStudents()
       .then(students => {

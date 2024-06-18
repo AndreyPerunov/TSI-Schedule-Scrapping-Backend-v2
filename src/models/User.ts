@@ -2,6 +2,7 @@ import axios from "axios"
 import { PrismaClient } from "@prisma/client"
 import { google } from "googleapis"
 import { TRole, IFullUserData } from "../types"
+import { log } from "util"
 
 interface GoogleTokensResult {
   access_token: string
@@ -121,6 +122,50 @@ abstract class User {
       } catch (error: any) {
         console.error(error, "❌ Failed to remove user by email")
         reject(new Error("❌ Failed to remove user by email"))
+      } finally {
+        prisma.$disconnect()
+      }
+    })
+  }
+
+  static updateUserByEmail(email: string, data: { role: string; name: string; group: string }): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      const prisma = new PrismaClient()
+      try {
+        const { role, name, group } = data
+        if (!role) throw new Error("❌ Role is required")
+        if (!group && !name) throw new Error("❌ Group or name is required")
+        if (role !== "student" && role !== "teacher") throw new Error("❌ Invalid role")
+        if (role === "student") {
+          console.log("Update student ", { email, group })
+          await prisma.user.update({
+            where: {
+              googleEmail: email
+            },
+            data: {
+              role,
+              groupRef: group,
+              lecturerRef: null
+            }
+          })
+          resolve()
+        } else {
+          console.log("Update teacher ", { email, name })
+          await prisma.user.update({
+            where: {
+              googleEmail: email
+            },
+            data: {
+              role,
+              groupRef: null,
+              lecturerRef: name
+            }
+          })
+          resolve()
+        }
+      } catch (error: any) {
+        console.error(error, "❌ Failed to update user by email")
+        reject(new Error("❌ Failed to update user by email"))
       } finally {
         prisma.$disconnect()
       }

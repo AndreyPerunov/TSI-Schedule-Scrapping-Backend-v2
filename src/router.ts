@@ -25,9 +25,10 @@ router.get("/api/rooms", RoomController.getRooms)
 router.get("/api/rooms/scrape", RoomController.scrapeRooms)
 
 router.get("/api/user/session", UserController.googleOAuthHandler)
-router.get("/api/user", UserController.mustBeLoggedIn, UserController.getUser)
 router.get("/api/user/logout", UserController.logout)
+router.get("/api/user", UserController.mustBeLoggedIn, UserController.getUser)
 router.delete("/api/user", UserController.mustBeLoggedIn, UserController.deleteUser)
+router.put("/api/user", UserController.mustBeLoggedIn, UserController.updateUser)
 router.get("/api/users/students", UserController.getStudents)
 router.get("/api/users/lecturers", UserController.getLecturers)
 
