@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Grpup:Lecture = M:M
+// Grpup:Lecture = 1:M
 model Group {
   groupName       String    @id()
   scrapeTimeStamp DateTime?
