@@ -2,7 +2,6 @@ import axios from "axios"
 import { PrismaClient } from "@prisma/client"
 import { google } from "googleapis"
 import { TRole, IFullUserData } from "../types"
-import { log } from "util"
 
 interface GoogleTokensResult {
   access_token: string
@@ -135,7 +134,7 @@ abstract class User {
         const { role, name, group } = data
         if (!role) throw new Error("❌ Role is required")
         if (!group && !name) throw new Error("❌ Group or name is required")
-        if (role !== "student" && role !== "teacher") throw new Error("❌ Invalid role")
+        if (role !== "student" && role !== "lecturer") throw new Error("❌ Invalid role")
         if (role === "student") {
           console.log("Update student ", { email, group })
           await prisma.user.update({
